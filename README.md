@@ -20,6 +20,21 @@
 | 前端底层 | React、状态管理（如 Zustand）、图表库（ECharts / D3 / react-force-graph 等） |
 | 前端业务 | 各 Panel 容器组件 + 联动逻辑 |
 
+### 前端工程（`frontend/`）
+
+- **栈**：Vite 5、React 18、TypeScript、Zustand、TanStack Query、ECharts、`react-force-graph-2d`。
+- **开发**：`cd frontend && npm install && npm run dev`，默认 <http://localhost:5173>；`/api` 已代理到 `http://127.0.0.1:8000`（后端就绪后可直接联调）。
+- **演示数据**：`frontend/.env.development` 中 `VITE_DEMO_MODE=true`（默认）时 Career / Galaxy / Genre / Profiler 使用占位图；接好 FastAPI 后设 `VITE_DEMO_MODE=false` 并配置 `VITE_API_BASE_URL`（可选，未配则走相对路径 `/api/v1`）。
+
+### 后端工程（`backend/`）
+
+- **栈**：FastAPI、Neo4j Python Driver（异步）、Pydantic Settings。
+- **启动**：`cd backend && python3 -m venv .venv && source .venv/bin/activate`（Windows 用 `.venv\Scripts\activate`），`pip install -r requirements.txt`，再执行  
+  `uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`。
+- **环境变量**：复制 `backend/.env.example` 为 `backend/.env`，填写 `NEO4J_PASSWORD`。未配置或无法连通时，`/health` 中 `neo4j` 为 `offline`，各接口仍返回与 OpenAPI 一致的空数据结构（`meta.db=offline`）。
+- **OpenAPI**：启动后访问 <http://127.0.0.1:8000/docs>。
+- **图模型约定**：Cypher 按 MC1 导入后的标签 `Person` / `Song` 与关系 `PerformerOf`、`InStyleOf` 编写（与 `MC1_graph.json` 中 `Node Type` / `Edge Type` 一致）。若导入脚本使用不同命名，请改 `app/constants.py` 或查询语句。
+
 ---
 
 ## 四层职责总览

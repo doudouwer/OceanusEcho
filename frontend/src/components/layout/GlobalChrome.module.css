@@ -1,0 +1,85 @@
+.chrome {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: flex-end;
+  padding: 0.75rem 1rem;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  flex: 1;
+  min-width: min(100%, 320px);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.fieldRow {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.input,
+.select {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+  min-width: 4.5rem;
+}
+
+.select {
+  min-width: 160px;
+  max-width: 220px;
+}
+
+.searchRow {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.searchRow .input {
+  min-width: 140px;
+  flex: 1;
+}
+
+.btn {
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8rem;
+}
+
+.btnPrimary {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: color-mix(in srgb, var(--accent) 18%, var(--bg-elevated));
+}
+
+.btnGhost:hover,
+.btnPrimary:hover {
+  border-color: var(--accent-dim);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.pill strong {
+  color: var(--text);
+  font-weight: 600;
+}
