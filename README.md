@@ -84,3 +84,48 @@
 - **规模**：节点数量大时需子图加载、邻居展开、上限与 Cluster 模式（见前端文档）。
 - **可追溯**：关键分析接口可返回 `evidence` 或查询标识，便于后续叙事/Agent 引用（见后端文档）。
 - **安全与运维**：API 限流、Neo4j 连接池、环境变量管理生产配置。
+
+---
+
+## 后端启动指南
+
+### 环境要求
+
+- Python 3.9+
+- Docker + Docker Compose
+
+### 快速启动
+
+```bash
+# 一键启动所有服务
+./scripts/start.sh
+```
+
+### 手动启动
+
+```bash
+cd backend
+
+# 创建虚拟环境
+python3 -m venv venv
+source venv/bin/activate
+
+# 安装依赖
+pip install -r requirements.txt
+
+# 启动 Neo4j
+docker compose up -d neo4j
+sleep 30  # 等待 Neo4j 启动
+
+# 导入数据
+python -m scripts.import_data --path ../MC1_release/MC1_graph.json
+
+# 启动 API
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### 服务地址
+
+- API 文档: http://localhost:8000/docs
+- Neo4j Browser: http://localhost:7474
+- Neo4j 账号: neo4j / password

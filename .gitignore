@@ -8,3 +8,6 @@ node_modules/
 dist/
 .venv/
 venv/
+
+# Docker volumes (数据持久化)
+neo4j_data/
