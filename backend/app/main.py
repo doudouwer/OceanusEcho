@@ -14,7 +14,6 @@ from .api import genre_flow, star_profiler, search
 
 settings = get_settings()
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
@@ -76,7 +75,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 # 注册路由
 app.include_router(

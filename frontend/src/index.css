@@ -1,0 +1,45 @@
+:root {
+  color-scheme: dark;
+  --bg-deep: #0a1218;
+  --bg-panel: #0f1a22;
+  --bg-elevated: #152028;
+  --border: #1e3544;
+  --text: #e6f2f5;
+  --text-muted: #7a9aa8;
+  --accent: #5ad8e8;
+  --accent-dim: #3a9aaa;
+  --danger: #f07178;
+  --radius: 10px;
+  --font-sans: "DM Sans", "Segoe UI", system-ui, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: radial-gradient(1200px 600px at 20% -10%, #122530 0%, var(--bg-deep) 55%);
+  color: var(--text);
+  line-height: 1.45;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
