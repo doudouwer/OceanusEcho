@@ -1,4 +1,4 @@
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -12,8 +12,8 @@ router = APIRouter(prefix="/analysis", tags=["analysis"])
 
 @router.get("/career-track", response_model=ApiResponse[CareerTrackData])
 async def get_career_track(
-    person_id: str | None = None,
-    person_name: str | None = None,
+    person_id: Optional[str] = None,
+    person_name: Optional[str] = None,
     start_year: int = Query(2023, ge=1900, le=2200),
     end_year: int = Query(2040, ge=1900, le=2200),
     session=Depends(get_neo4j_session),
@@ -35,7 +35,7 @@ async def get_genre_flow(
     end_year: int = Query(2040, ge=1900, le=2200),
     view: Literal["sankey", "stream"] = "sankey",
     metric: str = Query("style_edges", description="预留：不同统计口径"),
-    source_genre: str | None = None,
+    source_genre: Optional[str] = None,
     session=Depends(get_neo4j_session),
 ) -> ApiResponse[GenreFlowData]:
     if end_year < start_year:
