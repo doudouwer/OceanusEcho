@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -18,7 +20,7 @@ class WorkItem(BaseModel):
     title: str
     release_date: str
     notable: bool
-    genre: str | None = None
+    genre: Optional[str] = None
 
 
 class CareerTrackData(BaseModel):
@@ -50,9 +52,9 @@ class GenreSeries(BaseModel):
 class GenreFlowData(BaseModel):
     """view=sankey 时填充 nodes/links；view=stream 时填充 series。"""
 
-    nodes: list[GenreSankeyNode] | None = None
-    links: list[GenreSankeyLink] | None = None
-    series: list[GenreSeries] | None = None
+    nodes: Optional[list[GenreSankeyNode]] = None
+    links: Optional[list[GenreSankeyLink]] = None
+    series: Optional[list[GenreSeries]] = None
 
 
 class PersonProfileMetrics(BaseModel):

@@ -1,6 +1,7 @@
 import math
 from collections import defaultdict
 from collections.abc import Iterable
+from typing import Optional
 
 from neo4j import AsyncSession
 
@@ -35,7 +36,7 @@ def _map_api_rel_types(requested: list[str]) -> list[str]:
     return list(dict.fromkeys(out))
 
 
-async def fetch_subgraph(session: AsyncSession | None, body: SubgraphRequest) -> tuple[GraphPayload, ApiMeta]:
+async def fetch_subgraph(session: Optional[AsyncSession], body: SubgraphRequest) -> tuple[GraphPayload, ApiMeta]:
     meta = ApiMeta(db="offline" if session is None else "connected")
     if session is None:
         return GraphPayload(nodes=[], links=[]), meta
@@ -83,9 +84,9 @@ async def fetch_subgraph(session: AsyncSession | None, body: SubgraphRequest) ->
 
 
 async def fetch_expand(
-    session: AsyncSession | None,
+    session: Optional[AsyncSession],
     node_id: str,
-    rel_types: str | None,
+    rel_types: Optional[str],
     direction: str,
     limit: int,
 ) -> tuple[GraphPayload, ApiMeta]:
@@ -135,12 +136,12 @@ async def fetch_expand(
 
 
 async def fetch_career_track(
-    session: AsyncSession | None,
-    person_id: str | None,
-    person_name: str | None,
+    session: Optional[AsyncSession],
+    person_id: Optional[str],
+    person_name: Optional[str],
     start_year: int,
     end_year: int,
-) -> tuple[CareerTrackData | None, ApiMeta]:
+) -> tuple[Optional[CareerTrackData], ApiMeta]:
     meta = ApiMeta(db="offline" if session is None else "connected")
     empty_person = PersonRef(id=person_id or "", name=person_name or person_id or "未指定")
 
@@ -208,12 +209,12 @@ async def fetch_career_track(
 
 
 async def fetch_genre_flow(
-    session: AsyncSession | None,
+    session: Optional[AsyncSession],
     start_year: int,
     end_year: int,
     view: str,
     metric: str,
-    source_genre: str | None,
+    source_genre: Optional[str],
 ) -> tuple[GenreFlowData, ApiMeta]:
     meta = ApiMeta(db="offline" if session is None else "connected")
     if session is None:
@@ -285,7 +286,7 @@ def _entropy(counts: Iterable[int]) -> float:
 
 
 async def fetch_person_profiles(
-    session: AsyncSession | None,
+    session: Optional[AsyncSession],
     person_ids: list[str],
     start_year: int,
     end_year: int,
@@ -360,7 +361,7 @@ async def fetch_person_profiles(
 
 
 async def fetch_search(
-    session: AsyncSession | None,
+    session: Optional[AsyncSession],
     q: str,
     type_: str,
     limit: int,
