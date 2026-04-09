@@ -72,15 +72,15 @@ class StarProfilerService:
         """
         
         with self.db.session() as session:
-            # 构建时间过滤条件
+            # 构建时间过滤条件（release_date 是字符串，需要 toInteger 转换）
             time_filter = ""
             params = {"person_id": person_id}
             
             if start_year:
-                time_filter += " AND s.release_date >= $start_year"
+                time_filter += " AND toInteger(s.release_date) >= $start_year"
                 params["start_year"] = start_year
             if end_year:
-                time_filter += " AND s.release_date <= $end_year"
+                time_filter += " AND toInteger(s.release_date) <= $end_year"
                 params["end_year"] = end_year
             
             # 1. 获取艺人基本信息
@@ -121,10 +121,11 @@ class StarProfilerService:
             # 计算代表作比例
             notable_rate = notable_count / song_count if song_count > 0 else 0.0
             
-            # 计算活跃年数
+            # 计算活跃年数（release_date 是字符串，需要转换）
             try:
-                valid_years = [int(y) for y in release_years if y]
-                active_years = max(valid_years) - min(valid_years) + 1 if valid_years else 0
+                valid_years = [int(float(y)) for y in release_years if y]
+                valid_years = [y for y in valid_years if 1900 < y < 2100]  # 过滤无效年份
+                active_years = max(valid_years) - min(valid_years) + 1 if len(valid_years) > 1 else (1 if valid_years else 0)
             except:
                 active_years = 0
             
@@ -157,9 +158,12 @@ class StarProfilerService:
             degree_record = degree_result.single()
             degree = degree_record["degree"] if degree_record else 0
             
-            # 6. 获取风格影响力（被多少艺人引用为风格来源）
+            # 6. 获取风格影响力（有多少歌曲/专辑以该艺人为风格来源）
+            # 根据 PDF: InStyleOf: source (Song/Album) → target (Song/Album/Person/MusicalGroup)
+            # 即 Song/Album 的风格受 Person 影响
             influence_query = """
-            MATCH (influencer:Person {original_id: toInteger($person_id)})<-[:IN_STYLE_OF]-(influenced:Person)
+            MATCH (influencer:Person {original_id: toInteger($person_id)})<-[:IN_STYLE_OF]-(influenced)
+            WHERE influenced:Song OR influenced:Album
             RETURN count(influenced) as influence_count
             """
             influence_result = session.run(influence_query, person_id=person_id)

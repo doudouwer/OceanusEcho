@@ -224,11 +224,47 @@
 
 ### 3.2 索引与约束
 
-- **唯一性**：`Person(id)` 或 `Person(name)`（若全局唯一）用约束。
-- **查找**：`Song(release_date)`、`Song(notable)`、`Song(genre)` 复合场景可拆为多索引。
+- **唯一性**：`Person(original_id)` 或 `Person(name)` 用约束。
+- **查找**：`Song(release_date)`、`Song(genre)` 复合场景可拆为多索引。
 - **全文**：对 `Person.name`、`Song.name` 建全文索引以支持 `/search`。
 
----
+### 3.3 预计算属性
+
+在数据导入时执行以下预计算：
+
+#### inferred_genre（推断流派）
+
+对于没有直接 `genre` 属性的 Person 和 MusicalGroup，通过关联的歌曲计算推断流派：
+
+```cypher
+# Person: 根据其参与的歌曲的流派投票
+MATCH (p:Person)
+OPTIONAL MATCH (p)-[:PERFORMER_OF|COMPOSER_OF|PRODUCER_OF|LYRICIST_OF]-(s:Song)
+WHERE s.genre IS NOT NULL
+WITH p, s.genre as genre, count(*) as cnt
+ORDER BY p, cnt DESC
+SET p.inferred_genre = head(collect(genre))[0]
+```
+
+```cypher
+# MusicalGroup: 根据其成员的歌曲的流派投票
+MATCH (g:MusicalGroup)
+OPTIONAL MATCH (g)<-[:MEMBER_OF]-(p:Person)-[:PERFORMER_OF|COMPOSER_OF|PRODUCER_OF|LYRICIST_OF]-(s:Song)
+WHERE s.genre IS NOT NULL
+WITH g, s.genre as genre, count(*) as cnt
+ORDER BY g, cnt DESC
+SET g.inferred_genre = head(collect(genre))[0]
+```
+
+这样可以支持 `InStyleOf` 关系的 Target 为 Person/MusicalGroup 的情况。
+
+#### 其他预计算指标
+
+- `Person.degree`：图度数（连接数）
+- `Person.pagerank`：PageRank 中心性
+- 可根据需要扩展
+
+**注意**：预计算若带时间窗，应明确是「全历史」还是「接口传入窗口」；窗口敏感指标建议**运行时 Cypher 聚合**，避免组合爆炸。
 
 ### 3.3 预计算（可选，提升 Profiler 与子图体验）
 

@@ -225,6 +225,44 @@ def import_to_neo4j(json_path: str, batch_size: int = 1000):
                 RETURN genre, cnt ORDER BY cnt DESC
             """).consume()
             
+            # 为 Person 和 MusicalGroup 计算 inferred_genre
+            print("计算 inferred_genre 属性...")
+            session.run("""
+                MATCH (p:Person)
+                OPTIONAL MATCH (p)-[:PERFORMER_OF|COMPOSER_OF|PRODUCER_OF|LYRICIST_OF]-(s:Song)
+                WHERE s.genre IS NOT NULL
+                WITH p, s.genre as genre
+                WITH p, genre, count(*) as cnt
+                ORDER BY p, cnt DESC
+                WITH p, collect([genre, cnt]) as genre_counts
+                WHERE size(genre_counts) > 0
+                SET p.inferred_genre = genre_counts[0][0]
+                RETURN count(p) as persons_updated
+            """)
+            
+            session.run("""
+                MATCH (g:MusicalGroup)
+                OPTIONAL MATCH (g)<-[:MEMBER_OF]-(p:Person)-[:PERFORMER_OF|COMPOSER_OF|PRODUCER_OF|LYRICIST_OF]-(s:Song)
+                WHERE s.genre IS NOT NULL
+                WITH g, s.genre as genre
+                WITH g, genre, count(*) as cnt
+                ORDER BY g, cnt DESC
+                WITH g, collect([genre, cnt]) as genre_counts
+                WHERE size(genre_counts) > 0
+                SET g.inferred_genre = genre_counts[0][0]
+                RETURN count(g) as groups_updated
+            """)
+            
+            # 创建 inferred_genre 索引
+            session.run("""
+                CREATE INDEX person_inferred_genre IF NOT EXISTS
+                FOR (p:Person) ON (p.inferred_genre)
+            """)
+            session.run("""
+                CREATE INDEX group_inferred_genre IF NOT EXISTS
+                FOR (g:MusicalGroup) ON (g.inferred_genre)
+            """)
+            
             print("\n数据导入完成!")
             print(f"总节点数: {sum(node_count.values())}")
             print(f"总边数: {sum(edge_count.values())}")

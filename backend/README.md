@@ -1,6 +1,6 @@
-# OceanusEcho Backend
+# OceanusEcho 后端
 
-后端 API 服务，基于 FastAPI + Neo4j 构建。
+后端 API 服务，基于 FastAPI + Neo4j 构建，用于音乐知识图谱分析。
 
 ## 技术栈
 
@@ -39,7 +39,7 @@ pip install -r requirements.txt
 docker compose up -d neo4j
 # 等待 30 秒让 Neo4j 启动
 
-# 5. 导入数据
+# 5. 导入数据（会自动计算 inferred_genre）
 python -m scripts.import_data --path ../MC1_release/MC1_graph.json
 
 # 6. 启动 API 服务
@@ -51,6 +51,45 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - Python 3.9+
 - Docker + Docker Compose
 - Neo4j Browser 可访问 http://localhost:7474
+
+## 数据说明
+
+### 知识图谱结构
+
+数据来自 VAST 2025 MC1 数据集，包含 17,412 个节点和 37,857 条边：
+
+| 节点类型 | 说明 | 数量 |
+|---------|------|------|
+| Person | 音乐行业从业者（歌手、制作人、作曲家等） | 11,361 |
+| Song | 歌曲 | 3,615 |
+| Album | 专辑 | 996 |
+| RecordLabel | 唱片公司 | 1,217 |
+| MusicalGroup | 乐团/乐队 | 223 |
+
+| 关系类型 | 说明 | 数量 |
+|---------|------|------|
+| PerformerOf | 表演 | 13,587 |
+| RecordedBy | 录制 | 3,798 |
+| ComposerOf | 作曲 | 3,290 |
+| ProducerOf | 制作 | 3,209 |
+| DistributedBy | 发行 | 3,013 |
+| LyricistOf | 作词 | 2,985 |
+| **InStyleOf** | 风格参考 | 2,289 |
+| InterpolatesFrom | 旋律改编 | 1,574 |
+| LyricalReferenceTo | 歌词引用 | 1,496 |
+| CoverOf | 翻唱 | 1,429 |
+| DirectlySamples | 直接采样 | 619 |
+| MemberOf | 乐团成员 | 568 |
+
+### InStyleOf 关系说明
+
+根据数据描述文档，`InStyleOf` 关系定义如下：
+- **Source**: 只能是 Song 或 Album（以某种风格创作的作品）
+- **Target**: 可以是 Song、Album、Person 或 MusicalGroup（风格影响的来源）
+
+为了支持 Person/MusicalGroup 作为风格来源，导入脚本会自动计算 `inferred_genre` 属性：
+- Person: 根据其参与的所有歌曲的流派，通过投票计算推断流派
+- MusicalGroup: 根据其成员参与的歌曲的流派，通过投票计算推断流派
 
 ## API 文档
 

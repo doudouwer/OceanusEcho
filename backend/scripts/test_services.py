@@ -106,18 +106,20 @@ def test_genre_flow_query():
         db = get_neo4j_connection()
 
         with db.session() as session:
-            # 测试查询 1: 检查 IN_STYLE_OF 关系是否存在
-            print("\n  1. 检查 IN_STYLE_OF 关系...")
+            # 测试查询 1: 检查 IN_STYLE_OF 关系完整分布
+            print("\n  1. 检查 IN_STYLE_OF 关系完整分布...")
             check_query = """
-            MATCH (s:Song)-[r:IN_STYLE_OF]->(target)
-            RETURN count(r) as total_in_style_of,
-                   head(collect([s.genre, type(r), target.genre])) as sample
-            LIMIT 1
+            MATCH (s)-[:IN_STYLE_OF]->(t)
+            RETURN labels(s)[0] as source_type, count(*) as count
+            ORDER BY count DESC
             """
             result = session.run(check_query)
-            record = result.single()
-            print(f"     总 IN_STYLE_OF 关系数: {record['total_in_style_of']}")
-            print(f"     示例: {record['sample']}")
+            total = 0
+            print("     Source 类型分布:")
+            for r in result:
+                print(f"       {r['source_type']}: {r['count']}")
+                total += r['count']
+            print(f"     总 IN_STYLE_OF 关系数: {total}")
 
             # 测试查询 2: 检查 release_date 数据类型
             print("\n  2. 检查 release_date 数据...")
@@ -132,18 +134,24 @@ def test_genre_flow_query():
             for r in result:
                 print(f"     release_date={r['rd']} (type: {type(r['rd']).__name__}), sample: {r['sample']}")
 
-            # 测试查询 3: 执行流派演变查询
+            # 测试查询 3: 执行流派演变查询（包含所有 target 类型）
             print("\n  3. 执行流派演变查询...")
             flow_query = """
             MATCH (song:Song)-[:IN_STYLE_OF]->(style_source)
             WHERE toInteger(song.release_date) >= 2017
               AND toInteger(song.release_date) <= 2025
               AND song.genre IS NOT NULL
-              AND (style_source:Song OR style_source:Album)
-              AND style_source.genre IS NOT NULL
-              AND song.genre <> style_source.genre
+              AND (
+                (style_source:Song AND style_source.genre IS NOT NULL)
+                OR (style_source:Album AND style_source.genre IS NOT NULL)
+                OR (style_source:Person AND style_source.inferred_genre IS NOT NULL)
+                OR (style_source:MusicalGroup AND style_source.inferred_genre IS NOT NULL)
+              )
+              AND song.genre <> coalesce(style_source.genre, style_source.inferred_genre)
 
-            WITH song.genre as source_genre, style_source.genre as target_genre, count(*) as flow_count
+            WITH song.genre as source_genre, 
+                 coalesce(style_source.genre, style_source.inferred_genre) as target_genre, 
+                 count(*) as flow_count
             RETURN source_genre, target_genre, flow_count
             ORDER BY flow_count DESC
             LIMIT 10
@@ -154,7 +162,53 @@ def test_genre_flow_query():
             for r in records[:5]:
                 print(f"     {r['source_genre']} -> {r['target_genre']}: {r['flow_count']}")
 
-            print("✓ 流派演变查询测试完成")
+            # 检查 inferred_genre 是否存在
+            print("\n  4. 检查 inferred_genre 属性...")
+            check_inferred = """
+            MATCH (p:Person) WHERE p.inferred_genre IS NOT NULL RETURN count(p) as count, head(collect([p.name, p.inferred_genre])) as sample LIMIT 1
+            """
+            result = session.run(check_inferred)
+            record = result.single()
+            print(f"     Person 有 inferred_genre: {record['count'] if record else 0}")
+            if record and record['count'] > 0:
+                print(f"     示例: {record['sample']}")
+            
+            check_inferred_g = """
+            MATCH (g:MusicalGroup) WHERE g.inferred_genre IS NOT NULL RETURN count(g) as count, head(collect([g.name, g.inferred_genre])) as sample LIMIT 1
+            """
+            result = session.run(check_inferred_g)
+            record = result.single()
+            print(f"     MusicalGroup 有 inferred_genre: {record['count'] if record else 0}")
+            if record and record['count'] > 0:
+                print(f"     示例: {record['sample']}")
+            
+            # 检查 IN_STYLE_OF target 的类型分布
+            print("\n  5. 检查 IN_STYLE_OF Target 类型分布...")
+            target_dist = """
+            MATCH (s)-[:IN_STYLE_OF]->(t)
+            RETURN labels(t)[0] as target_type, count(*) as count
+            ORDER BY count DESC
+            """
+            result = session.run(target_dist)
+            print("     Target 类型分布:")
+            for r in result:
+                print(f"       {r['target_type']}: {r['count']}")
+            
+            # 检查 Person/MusicalGroup 作为 target 的情况
+            print("\n  6. 检查 Person/MusicalGroup 作为 IN_STYLE_OF target...")
+            check_targets = """
+            MATCH (s)-[:IN_STYLE_OF]->(target)
+            WHERE 'Person' IN labels(target) OR 'MusicalGroup' IN labels(target)
+            RETURN labels(target)[0] as target_type, target.name as name, 
+                   target.inferred_genre as inferred_genre
+            LIMIT 5
+            """
+            result = session.run(check_targets)
+            print("     Person/MusicalGroup 作为 target 的示例:")
+            for r in result:
+                print(f"       {r['name']} ({r['target_type']}): inferred_genre = {r['inferred_genre']}")
+
+            print("✓ 数据检查完成")
             return True
 
     except Exception as e:

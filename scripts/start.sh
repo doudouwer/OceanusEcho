@@ -97,7 +97,10 @@ start_api() {
     source venv/bin/activate
 
     # 检查依赖
-    pip install -q -r requirements.txt 2>/dev/null || true
+    if ! pip install -r requirements.txt; then
+        echo -e "${RED}✗ 依赖安装失败${NC}"
+        exit 1
+    fi
 
     echo -e "${GREEN}✓ FastAPI 服务启动完成${NC}"
     echo -e "\n${GREEN}==========================================${NC}"

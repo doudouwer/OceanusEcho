@@ -68,22 +68,28 @@ class GenreFlowService:
                 genre_filter_clause = "AND song.genre = $source_genre"
             
             # Cypher 查询：追踪流派之间的风格影响流动
-            # 模式：Song -[:IN_STYLE_OF]-> StyleSource (Song/Album)
+            # 模式：Song -[:IN_STYLE_OF]-> StyleSource (Song/Album/Person/MusicalGroup)
             # 统计 source_genre -> target_genre 的流动量
             # 根据 PDF: InStyleOf 的 source 是 Song/Album，target 可以是 Song/Album/Person/MusicalGroup
-            # 只有 Song/Album 有 genre 属性，所以查询目标是 Song 或 Album
+            # Song/Album 直接有 genre 属性，Person/MusicalGroup 使用 inferred_genre
             # 注意：release_date 在数据库中是字符串类型，需要用 toInteger() 转换
             query = f"""
             MATCH (song:Song)-[:IN_STYLE_OF]->(style_source)
             WHERE toInteger(song.release_date) >= $start_year
               AND toInteger(song.release_date) <= $end_year
               AND song.genre IS NOT NULL
-              AND (style_source:Song OR style_source:Album)
-              AND style_source.genre IS NOT NULL
-              AND song.genre <> style_source.genre
+              AND (
+                (style_source:Song AND style_source.genre IS NOT NULL)
+                OR (style_source:Album AND style_source.genre IS NOT NULL)
+                OR (style_source:Person AND style_source.inferred_genre IS NOT NULL)
+                OR (style_source:MusicalGroup AND style_source.inferred_genre IS NOT NULL)
+              )
+              AND song.genre <> coalesce(style_source.genre, style_source.inferred_genre)
               {genre_filter_clause}
             
-            WITH song.genre as source_genre, style_source.genre as target_genre, count(*) as flow_count
+            WITH song.genre as source_genre, 
+                 coalesce(style_source.genre, style_source.inferred_genre) as target_genre, 
+                 count(*) as flow_count
             RETURN source_genre, target_genre, flow_count
             ORDER BY flow_count DESC
             LIMIT $limit
