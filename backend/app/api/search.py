@@ -3,11 +3,12 @@
 """
 
 from fastapi import APIRouter, Query, HTTPException
-from typing import Optional
 from ..schemas.models import SearchResponse, SearchResult
 from ..core.database import get_neo4j_connection
+from ..services.local_graph import load_local_graph
 
 router = APIRouter(prefix="/search", tags=["搜索"])
+LOCAL_GRAPH = load_local_graph()
 
 
 @router.get("", response_model=SearchResponse)
@@ -43,63 +44,69 @@ async def search(
     db = get_neo4j_connection()
     
     try:
+        with db.session() as session:
+            if session is None:
+                hits = LOCAL_GRAPH.search(q, type, limit)
+                return SearchResponse(
+                    results=[SearchResult(**hit) for hit in hits],
+                    total=len(hits),
+                    query=q,
+                )
+
         results = []
         total = 0
-        
-        with db.session() as session:
-            if type in ["person", "all"]:
-                # 搜索 Person
-                person_query = """
-                MATCH (p:Person)
-                WHERE p.name CONTAINS $keyword OR p.stage_name CONTAINS $keyword
-                RETURN p.original_id as id, p.name as name, 'person' as type,
-                       p.stage_name as stage_name
-                LIMIT $limit
-                """
-                person_result = session.run(person_query, keyword=q, limit=limit)
-                
-                for record in person_result:
-                    results.append(SearchResult(
-                        id=str(record["id"]),
-                        label=record["stage_name"] or record["name"],
-                        type="person",
-                        subtitle=f"艺人 | {record['name']}" if record.get("stage_name") else None
-                    ))
-                
-                total += len(results)
-            
-            if type in ["song", "all"]:
-                # 搜索 Song
-                song_query = """
-                MATCH (s:Song)
-                WHERE s.name CONTAINS $keyword
-                RETURN s.original_id as id, s.name as name, s.genre as genre,
-                       s.release_date as year, s.notable as notable, 'song' as type
-                LIMIT $limit
-                """
-                song_result = session.run(song_query, keyword=q, limit=limit)
-                
-                for record in song_result:
-                    notable_mark = "★" if record.get("notable") else ""
-                    genre = record.get("genre") or ""
-                    year = record.get("year") or ""
-                    
-                    subtitle_parts = []
-                    if genre:
-                        subtitle_parts.append(genre)
-                    if year:
-                        subtitle_parts.append(year)
-                    if notable_mark:
-                        subtitle_parts.append(notable_mark)
-                    
-                    results.append(SearchResult(
-                        id=str(record["id"]),
-                        label=record["name"],
-                        type="song",
-                        subtitle=" | ".join(subtitle_parts) if subtitle_parts else None
-                    ))
-                
-                total += len(results)
+
+        if type in ["person", "all"]:
+            person_query = """
+            MATCH (p:Person)
+            WHERE p.name CONTAINS $keyword OR p.stage_name CONTAINS $keyword
+            RETURN p.original_id as id, p.name as name, 'person' as type,
+                   p.stage_name as stage_name
+            LIMIT $limit
+            """
+            person_result = session.run(person_query, keyword=q, limit=limit)
+
+            for record in person_result:
+                results.append(SearchResult(
+                    id=str(record["id"]),
+                    label=record["stage_name"] or record["name"],
+                    type="person",
+                    subtitle=f"艺人 | {record['name']}" if record.get("stage_name") else None
+                ))
+
+            total += len(results)
+
+        if type in ["song", "all"]:
+            song_query = """
+            MATCH (s:Song)
+            WHERE s.name CONTAINS $keyword
+            RETURN s.original_id as id, s.name as name, s.genre as genre,
+                   s.release_date as year, s.notable as notable, 'song' as type
+            LIMIT $limit
+            """
+            song_result = session.run(song_query, keyword=q, limit=limit)
+
+            for record in song_result:
+                notable_mark = "★" if record.get("notable") else ""
+                genre = record.get("genre") or ""
+                year = record.get("year") or ""
+
+                subtitle_parts = []
+                if genre:
+                    subtitle_parts.append(genre)
+                if year:
+                    subtitle_parts.append(year)
+                if notable_mark:
+                    subtitle_parts.append(notable_mark)
+
+                results.append(SearchResult(
+                    id=str(record["id"]),
+                    label=record["name"],
+                    type="song",
+                    subtitle=" | ".join(subtitle_parts) if subtitle_parts else None
+                ))
+
+            total += sum(1 for item in results if item.type == "song")
         
         # 限制总结果数
         results = results[:limit]
