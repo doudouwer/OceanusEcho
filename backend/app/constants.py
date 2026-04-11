@@ -7,6 +7,13 @@ DEFAULT_REL_TYPES: dict[str, str] = {
     "INTERPOLATES_FROM": "InterpolatesFrom",
     "COMPOSER_OF": "ComposerOf",
     "LYRICIST_OF": "LyricistOf",
+    "RECORDED_BY": "RecordedBy",
+    "DISTRIBUTED_BY": "DistributedBy",
+    "COVER_OF": "CoverOf",
+    "LYRICAL_REFERENCE_TO": "LyricalReferenceTo",
+    "DIRECTLY_SAMPLES": "DirectlySamples",
+    "MEMBER_OF": "MemberOf",
+    "PRODUCER_OF": "ProducerOf",
 }
 
 DEFAULT_LABEL_PERSON = "Person"

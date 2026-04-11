@@ -10,27 +10,20 @@ from contextlib import asynccontextmanager
 
 from .core.config import get_settings
 from .core.database import neo4j_connection
-from .api import genre_flow, star_profiler, search
+from .api import career_arc, genre_flow, graph, search, star_profiler
 
 settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
-    # 启动时
     print("正在连接 Neo4j 数据库...")
-    try:
-        neo4j_connection.connect()
-        if neo4j_connection.verify_connectivity():
-            print("✓ Neo4j 连接成功")
-        else:
-            print("⚠ Neo4j 连接验证失败，请检查配置")
-    except Exception as e:
-        print(f"⚠ Neo4j 连接失败: {e}")
+    neo4j_connection.connect()
+    neo4j_connection.verify_connectivity()
+    print("✓ Neo4j 连接成功")
     
     yield
     
-    # 关闭时
     print("关闭 Neo4j 连接...")
     neo4j_connection.close()
 
@@ -84,6 +77,18 @@ app.include_router(
 )
 
 app.include_router(
+    career_arc.router,
+    prefix=settings.api_prefix,
+    tags=["职业时轴 (Career Arc)"]
+)
+
+app.include_router(
+    graph.router,
+    prefix=settings.api_prefix,
+    tags=["影响力网络 (Influence Galaxy)"]
+)
+
+app.include_router(
     star_profiler.router,
     prefix=settings.api_prefix,
     tags=["艺人画像 (Star Profiler)"]
@@ -110,7 +115,7 @@ async def root():
 @app.get("/health", tags=["健康检查"])
 async def health_check():
     """健康检查端点"""
-    neo4j_status = "connected" if neo4j_connection.verify_connectivity() else "disconnected"
+    neo4j_status = "connected" if neo4j_connection.is_available() else "disconnected"
     
     return {
         "status": "healthy",

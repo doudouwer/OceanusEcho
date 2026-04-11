@@ -1,12 +1,10 @@
-from typing import Optional
-
 from pydantic import BaseModel, Field, model_validator
 
 
 class GraphNode(BaseModel):
     id: str
     label: str
-    name: Optional[str] = None
+    name: str | None = None
     props: dict = Field(default_factory=dict)
 
 
@@ -39,6 +37,6 @@ class SubgraphRequest(BaseModel):
 
 
 class ExpandParams(BaseModel):
-    rel_types: Optional[str] = None
+    rel_types: str | None = None
     direction: str = "both"
     limit: int = Field(default=200, ge=1, le=5000)

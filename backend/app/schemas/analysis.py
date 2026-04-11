@@ -2,6 +2,8 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
+from app.schemas.graph import GraphPayload
+
 
 class PersonRef(BaseModel):
     id: str
@@ -20,11 +22,21 @@ class WorkItem(BaseModel):
     title: str
     release_date: str
     notable: bool
-    genre: Optional[str] = None
+    genre: str | None = None
+
+
+class CareerSummary(BaseModel):
+    first_release_year: int | None = None
+    first_notable_year: int | None = None
+    fame_gap_years: int | None = None
+    peak_year: int | None = None
+    active_span_years: int = 0
+    total_works: int = 0
 
 
 class CareerTrackData(BaseModel):
     person: PersonRef
+    summary: CareerSummary | None = None
     by_year: list[YearAgg]
     works: list[WorkItem]
 
@@ -76,3 +88,25 @@ class PersonProfileRow(BaseModel):
 class PersonProfileData(BaseModel):
     profiles: list[PersonProfileRow]
     dimensions: list[str]
+
+
+class GalaxyBridgeNode(BaseModel):
+    node_id: str
+    name: str
+    label: str
+    bridge_score: float
+    degree: int
+
+
+class GalaxyCluster(BaseModel):
+    component_id: int
+    node_count: int
+    edge_count: int
+    sample_nodes: list[PersonRef] = Field(default_factory=list)
+
+
+class InfluenceGalaxyData(BaseModel):
+    graph: GraphPayload
+    seed_people: list[PersonRef] = Field(default_factory=list)
+    clusters: list[GalaxyCluster] = Field(default_factory=list)
+    bridge_nodes: list[GalaxyBridgeNode] = Field(default_factory=list)
