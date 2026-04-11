@@ -1,14 +1,60 @@
 .chrome {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem 1rem;
-  align-items: flex-end;
+  flex-direction: column;
+  gap: 0.65rem;
   padding: 0.75rem 1rem;
   background: var(--bg-panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   flex: 1;
   min-width: min(100%, 320px);
+}
+
+.chromeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: flex-end;
+}
+
+.narrative {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  padding-bottom: 0.15rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.narrative strong {
+  color: var(--text);
+  font-weight: 650;
+}
+
+.bandRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.bandLabel {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-right: 0.25rem;
+}
+
+details.optionalSearch {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+details.optionalSearch summary {
+  cursor: pointer;
+  user-select: none;
+}
+
+details.optionalSearch summary:hover {
+  color: var(--accent);
 }
 
 .field {
@@ -82,4 +128,62 @@
 .pill strong {
   color: var(--text);
   font-weight: 600;
+}
+
+.searchWrap {
+  position: relative;
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+
+.dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  z-index: 50;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.dropdownItem {
+  padding: 0.45rem 0.55rem;
+  font-size: 0.78rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dropdownItem:last-child {
+  border-bottom: none;
+}
+
+.dropdownMeta {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.rowBtns {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.miniBtn {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+  cursor: pointer;
+}
+
+.miniBtn:hover {
+  border-color: var(--accent-dim);
 }

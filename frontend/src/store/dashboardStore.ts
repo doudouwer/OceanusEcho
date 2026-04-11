@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { DEFAULT_SAILOR_PERSON_ID } from "@/config";
 
 export type YearRange = readonly [number, number];
 
@@ -25,8 +26,9 @@ const DEFAULT_YEAR_RANGE: YearRange = [2023, 2040] as const;
 
 export const useDashboardStore = create<DashboardState>((set, get) => ({
   yearRange: DEFAULT_YEAR_RANGE,
-  selectedGenres: [],
-  focusedPersonId: null,
+  /** 默认围绕 Oceanus Folk + Sailor 叙事 */
+  selectedGenres: ["Oceanus Folk"],
+  focusedPersonId: DEFAULT_SAILOR_PERSON_ID,
   comparePersonIds: [],
   focusedTimeRange: null,
   highlightSongIds: [],
@@ -34,9 +36,11 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   setYearRange: (yearRange) => set({ yearRange }),
   setSelectedGenres: (selectedGenres) => set({ selectedGenres }),
   setFocusedPersonId: (focusedPersonId) => set({ focusedPersonId }),
+  /** 回到 Silas 默认视角：Sailor + 清空对比与时间刷选 */
   clearFocus: () =>
     set({
-      focusedPersonId: null,
+      focusedPersonId: DEFAULT_SAILOR_PERSON_ID,
+      comparePersonIds: [],
       focusedTimeRange: null,
       highlightSongIds: [],
     }),

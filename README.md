@@ -24,7 +24,7 @@
 
 - **栈**：Vite 5、React 18、TypeScript、Zustand、TanStack Query、ECharts、`react-force-graph-2d`。
 - **开发**：`cd frontend && npm install && npm run dev`，默认 <http://localhost:5173>；`/api` 已代理到 `http://127.0.0.1:8000`（后端就绪后可直接联调）。
-- **演示数据**：`frontend/.env.development` 中 `VITE_DEMO_MODE=true`（默认）时 Career / Galaxy / Genre / Profiler 使用占位图；接好 FastAPI 后设 `VITE_DEMO_MODE=false` 并配置 `VITE_API_BASE_URL`（可选，未配则走相对路径 `/api/v1`）。
+- **真实接口**：流派演变、艺人画像已接 `GET /api/v1/analysis/genre-flow`、`/analysis/person-profile`（`normalized=true`）；`/search` 收在顶部「可选」折叠里。默认 **聚焦 Sailor Shift**（`original_id` 17255）、流派预选 **Oceanus Folk**，与 Silas 叙事一致。`VITE_DEMO_MODE` 仅影响 **Career Arc** 与 **Influence Galaxy**；可用 `VITE_DEFAULT_PERSON_ID` 覆盖主角 id。
 
 ### 后端工程（`backend/`）
 

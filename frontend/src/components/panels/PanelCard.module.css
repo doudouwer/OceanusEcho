@@ -35,6 +35,22 @@
   border-radius: 999px;
 }
 
+.tagBtn,
+.tagBtnOn {
+  font-size: 0.72rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.tagBtnOn {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  color: var(--accent);
+}
+
 .desc {
   margin: 0;
   padding: 0.35rem 0.85rem 0.5rem;

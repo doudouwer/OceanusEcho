@@ -46,11 +46,11 @@ class Neo4jConnection:
     
     @contextmanager
     def session(self, **kwargs):
-        """上下文管理器：自动管理会话"""
-        driver = self.get_driver()
-        if driver is None:
-            raise RuntimeError("Neo4j 未连接，无法创建 session")
-        session = driver.session(**kwargs)
+        """无可用 driver 时 yield None，由各 service 走 LOCAL_GRAPH 等离线路径。"""
+        if self._driver is None:
+            yield None
+            return
+        session = self._driver.session(**kwargs)
         try:
             yield session
         finally:
