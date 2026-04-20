@@ -95,16 +95,16 @@ export function GenreFlowPanel() {
 
   const filterHint =
     selectedGenres.length > 1
-      ? "多选流派时桑基不按单流派过滤；仅选 1 个流派时可聚焦 source_genre"
+      ? "With multiple genres, Sankey is not filtered to one genre; pick exactly one to focus source_genre"
       : selectedGenres.length === 1
-        ? `聚焦源流：${selectedGenres[0]}`
-        : "未选单一流派：展示时间窗内全部桑基/河流";
+        ? `Source genre: ${selectedGenres[0]}`
+        : "No single genre: showing full-window Sankey / river";
 
   return (
     <PanelCard
-      title="流派演变"
+      title="Genre evolution"
       tag="Genre Flow"
-      description="GET /api/v1/analysis/genre-flow — style_edges 桑基 · genre_mix 堆叠面积（近似河流）。"
+      description="GET /api/v1/analysis/genre-flow — style_edges Sankey · genre_mix stacked area (river-like)."
     >
       <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center", margin: "0 0.5rem 0.35rem" }}>
         <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
@@ -116,27 +116,27 @@ export function GenreFlowPanel() {
             className={metric === "style_edges" ? panelStyles.tagBtnOn : panelStyles.tagBtn}
             onClick={() => setMetric("style_edges")}
           >
-            桑基
+            Sankey
           </button>
           <button
             type="button"
             className={metric === "genre_mix" ? panelStyles.tagBtnOn : panelStyles.tagBtn}
             onClick={() => setMetric("genre_mix")}
           >
-            河流
+            River
           </button>
         </div>
       </div>
-      {isPending && <div className={panelStyles.empty}>加载中…</div>}
+      {isPending && <div className={panelStyles.empty}>Loading…</div>}
       {isError && (
         <div className={panelStyles.empty}>
-          加载失败：{error instanceof Error ? error.message : "未知错误"}
+          Failed to load: {error instanceof Error ? error.message : "Unknown error"}
           <br />
-          <small>请确认后端已启动且 Neo4j 已导入数据。</small>
+          <small>Ensure the backend is running and Neo4j has data loaded.</small>
         </div>
       )}
       {!isPending && !isError && !option && (
-        <div className={panelStyles.empty}>该时间窗内暂无流派数据，可调整年份或流派筛选。</div>
+        <div className={panelStyles.empty}>No genre data in this window; try other years or genres.</div>
       )}
       {!isPending && !isError && option && (
         <ReactECharts style={{ height: "100%", minHeight: 240 }} option={option} notMerge />

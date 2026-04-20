@@ -46,13 +46,14 @@ async def fetch_subgraph(session: Optional[AsyncSession], body: SubgraphRequest)
     lim = body.limit_nodes
     notable_filter = "AND coalesce(s.notable, false) = true" if body.only_notable_songs else ""
 
+    rel_pf = DEFAULT_REL_TYPES["PERFORMER_OF"]
     cypher = f"""
-    MATCH (p:Person)-[r:PerformerOf]->(s:Song)
+    MATCH (p:Person)-[r:{rel_pf}]->(s:Song)
     WHERE toInteger(trim(toString(s.release_date))) >= $sy
       AND toInteger(trim(toString(s.release_date))) <= $ey
       {notable_filter}
       AND (size($genres) = 0 OR s.genre IN $genres)
-      AND (size($seed) = 0 OR toString(p.id) IN $seed OR p.name IN $seed)
+      AND (size($seed) = 0 OR toString(p.original_id) IN $seed OR toString(p.id) IN $seed OR p.name IN $seed)
     RETURN p, r, s
     LIMIT $lim
     """
@@ -106,7 +107,7 @@ async def fetch_expand(
 
     cypher = f"""
     MATCH (n)
-    WHERE toString(n.id) = $nid OR n.name = $nid
+    WHERE toString(n.original_id) = $nid OR toString(n.id) = $nid OR n.name = $nid
     WITH n LIMIT 1
     MATCH {pattern}
     WHERE type(r) IN $types
@@ -150,8 +151,9 @@ async def fetch_career_track(
 
     cypher = """
     MATCH (p:Person)
-    WHERE ($pid IS NULL OR toString(p.id) = $pid) AND ($pname IS NULL OR p.name = $pname)
-    MATCH (p)-[:PerformerOf]->(s:Song)
+    WHERE ($pid IS NULL OR toString(p.original_id) = $pid OR toString(p.id) = $pid)
+      AND ($pname IS NULL OR p.name = $pname)
+    MATCH (p)-[:PERFORMER_OF]->(s:Song)
     WHERE toInteger(trim(toString(s.release_date))) >= $sy
       AND toInteger(trim(toString(s.release_date))) <= $ey
     RETURN p, s
@@ -247,8 +249,9 @@ async def fetch_genre_flow(
 
     # sankey：同一 Person 上两首不同流派歌曲经 InStyleOf 共现（近似「风格影响」下的流派桥接）
     _ = metric
-    cypher = """
-    MATCH (sa:Song)-[:InStyleOf]->(hub:Person)<-[:InStyleOf]-(sb:Song)
+    rel_style = DEFAULT_REL_TYPES["IN_STYLE_OF"]
+    cypher = f"""
+    MATCH (sa:Song)-[:{rel_style}]->(hub:Person)<-[:{rel_style}]-(sb:Song)
     WHERE sa.genre IS NOT NULL AND sb.genre IS NOT NULL AND sa.genre <> sb.genre
       AND toInteger(trim(toString(sa.release_date))) >= $sy
       AND toInteger(trim(toString(sa.release_date))) <= $ey
@@ -306,11 +309,11 @@ async def fetch_person_profiles(
 
     cypher = """
     MATCH (p:Person)
-    WHERE toString(p.id) = $pid OR p.name = $pid
-    OPTIONAL MATCH (p)-[:PerformerOf]->(s:Song)
+    WHERE toString(p.original_id) = $pid OR toString(p.id) = $pid OR p.name = $pid
+    OPTIONAL MATCH (p)-[:PERFORMER_OF]->(s:Song)
     WHERE toInteger(trim(toString(s.release_date))) >= $sy
       AND toInteger(trim(toString(s.release_date))) <= $ey
-    OPTIONAL MATCH (other:Person)-[:PerformerOf]->(s)
+    OPTIONAL MATCH (other:Person)-[:PERFORMER_OF]->(s)
     WHERE other <> p
     RETURN p, collect(DISTINCT s) AS songs, collect(DISTINCT other) AS others
     """

@@ -50,19 +50,19 @@ export function GlobalChrome() {
   return (
     <div className={styles.chrome}>
       <div className={styles.narrative}>
-        <strong>Silas · Oceanus Folk: Then-and-Now</strong> — 默认围绕{" "}
-        <strong>{DEFAULT_SAILOR_NAME}</strong>（<code>id {DEFAULT_SAILOR_PERSON_ID}</code>
-        ）展示画像与流派；年窗与「Ivy Echoes」成员可辅助对比。
+        <strong>Silas · Oceanus Folk: Then-and-Now</strong> — centered on{" "}
+        <strong>{DEFAULT_SAILOR_NAME}</strong> (<code>id {DEFAULT_SAILOR_PERSON_ID}</code>
+        ) for profiles and genres; the year window and Ivy Echoes members support comparison.
         {!isSailor && (
           <>
             {" "}
-            当前主角 id：<strong>{focusedPersonId}</strong>
+            Current lead id: <strong>{focusedPersonId}</strong>
           </>
         )}
       </div>
 
       <div className={styles.bandRow}>
-        <span className={styles.bandLabel}>Ivy Echoes → 对比</span>
+        <span className={styles.bandLabel}>Ivy Echoes → compare</span>
         {IVY_ECHOES_BANDMATES.map((m) => (
           <button
             key={m.id}
@@ -75,13 +75,13 @@ export function GlobalChrome() {
           </button>
         ))}
         <button type="button" className={styles.btn} onClick={() => clearFocus()}>
-          恢复 Sailor 视角
+          Reset to Sailor
         </button>
       </div>
 
       <div className={styles.chromeRow}>
         <label className={styles.field}>
-          时间范围（年）
+          Year range
           <div className={styles.fieldRow}>
             <input
               className={styles.input}
@@ -110,7 +110,7 @@ export function GlobalChrome() {
         </label>
 
         <label className={styles.field}>
-          流派筛选（多选）
+          Genres (multi-select)
           <select
             className={styles.select}
             multiple
@@ -130,7 +130,7 @@ export function GlobalChrome() {
         </label>
 
         <div className={styles.field}>
-          当前主角 id
+          Lead person id
           <div className={styles.searchRow}>
             <input
               className={styles.input}
@@ -142,20 +142,20 @@ export function GlobalChrome() {
         </div>
 
         <div className={styles.field}>
-          状态
+          Status
           <div className={styles.pill}>
-            聚焦 <strong>{focusedPersonId}</strong>
+            Focus: <strong>{focusedPersonId}</strong>
           </div>
         </div>
       </div>
 
       <details className={styles.optionalSearch}>
-        <summary>搜索其他艺人 / 歌曲（可选）</summary>
+        <summary>Search artists / songs (optional)</summary>
         <div ref={wrapRef} className={styles.searchWrap} style={{ marginTop: "0.5rem" }}>
           <div className={styles.searchRow}>
             <input
               className={styles.input}
-              placeholder="名称关键词…"
+              placeholder="Name keyword…"
               value={searchQ}
               onChange={(e) => {
                 setSearchQ(e.target.value);
@@ -166,7 +166,7 @@ export function GlobalChrome() {
           </div>
           {openDropdown && debouncedQ.length >= 1 && (
             <div className={styles.dropdown}>
-              {isFetching && <div className={styles.dropdownItem}>搜索中…</div>}
+              {isFetching && <div className={styles.dropdownItem}>Searching…</div>}
               {!isFetching &&
                 searchData?.results?.map((hit) => (
                   <div key={`${hit.type}-${hit.id}`} className={styles.dropdownItem}>
@@ -187,7 +187,7 @@ export function GlobalChrome() {
                             setOpenDropdown(false);
                           }}
                         >
-                          设为主角
+                          Set as lead
                         </button>
                         <button
                           type="button"
@@ -197,14 +197,14 @@ export function GlobalChrome() {
                             setOpenDropdown(false);
                           }}
                         >
-                          加入对比
+                          Add to compare
                         </button>
                       </div>
                     )}
                   </div>
                 ))}
               {!isFetching && searchData?.results?.length === 0 && (
-                <div className={styles.dropdownItem}>无结果</div>
+                <div className={styles.dropdownItem}>No results</div>
               )}
             </div>
           )}

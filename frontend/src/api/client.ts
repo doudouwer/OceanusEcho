@@ -1,8 +1,8 @@
-/** 路径前缀：默认 /api/v1，由 Vite 代理到后端 8000；若设 VITE_API_BASE_URL 须为绝对地址且含 /api/v1 */
+/** Path prefix: defaults to /api/v1 via Vite proxy to backend :8000; VITE_API_BASE_URL must be absolute and include /api/v1 */
 const base = () =>
   (import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ?? "") || "/api/v1";
 
-/** path 为业务路径，如 `/analysis/genre-flow`（不含 /api/v1）；或完整 http(s) URL */
+/** `path` is a business path like `/analysis/genre-flow` (without /api/v1), or a full http(s) URL */
 function resolveApiUrl(path: string): URL {
   if (path.startsWith("http://") || path.startsWith("https://")) {
     return new URL(path);
@@ -13,7 +13,7 @@ function resolveApiUrl(path: string): URL {
   if (joined.startsWith("http://") || joined.startsWith("https://")) {
     return new URL(joined);
   }
-  // 浏览器中单参数 new URL("/api/...") 会抛 Invalid URL，必须用第二参数 base（当前页 origin → Vite 再代理到 8000）
+  // In the browser, new URL("/api/...") with one arg throws Invalid URL; use base (page origin → Vite proxies to :8000)
   const origin =
     typeof window !== "undefined" && window.location?.origin
       ? window.location.origin

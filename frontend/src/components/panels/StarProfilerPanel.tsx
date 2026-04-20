@@ -8,12 +8,12 @@ import panelStyles from "@/components/panels/PanelCard.module.css";
 import styles from "./StarProfilerPanel.module.css";
 
 const DIM_LABELS: Record<string, string> = {
-  song_count: "作品数",
-  notable_rate: "Notable 率",
-  active_years: "活跃年数",
-  unique_collaborators: "合作者",
-  genre_entropy: "流派熵",
-  degree: "度数",
+  song_count: "Song count",
+  notable_rate: "Notable rate",
+  active_years: "Active years",
+  unique_collaborators: "Collaborators",
+  genre_entropy: "Genre entropy",
+  degree: "Degree",
   pagerank: "PageRank",
 };
 
@@ -93,16 +93,16 @@ export function StarProfilerPanel() {
 
   return (
     <PanelCard
-      title="艺人画像"
+      title="Artist profile"
       tag="Star Profiler"
-      description="GET /api/v1/analysis/person-profile?normalized=true。对比区最多 3 人；未选对比时用当前聚焦艺人。"
+      description="GET /api/v1/analysis/person-profile?normalized=true — up to 3 in compare; if none, uses the current lead."
     >
       <div className={styles.toolbar}>
-        <span className={styles.toolbarHint}>对比列表（点击移除）：</span>
+        <span className={styles.toolbarHint}>Compare list (click to remove):</span>
         <div className={styles.chips}>
           {comparePersonIds.length === 0 ? (
             <span className={styles.toolbarHint}>
-              空 — 点顶部 Ivy Echoes 成员加入对比；或展开「搜索其他艺人」。
+              Empty — add Ivy Echoes members from the top, or open “Search artists / songs”.
             </span>
           ) : (
             comparePersonIds.map((id) => (
@@ -113,22 +113,22 @@ export function StarProfilerPanel() {
           )}
         </div>
         <span className={styles.toolbarHint}>
-          年窗 {yearRange[0]}–{yearRange[1]}
+          Year window {yearRange[0]}–{yearRange[1]}
         </span>
       </div>
       {ids.length === 0 && (
         <div className={panelStyles.empty}>
-          未选择主角。顶部应默认 Sailor Shift；若清空过 id，请点「恢复 Sailor 视角」或手动输入 original_id。
+          No lead selected. The header defaults to Sailor Shift; if you cleared the id, click “Reset to Sailor” or enter an original_id.
         </div>
       )}
-      {ids.length >= 1 && isPending && <div className={panelStyles.empty}>加载中…</div>}
+      {ids.length >= 1 && isPending && <div className={panelStyles.empty}>Loading…</div>}
       {ids.length >= 1 && isError && (
         <div className={panelStyles.empty}>
-          加载失败：{error instanceof Error ? error.message : "未知错误"}
+          Failed to load: {error instanceof Error ? error.message : "Unknown error"}
         </div>
       )}
       {ids.length >= 1 && !isPending && !isError && !option && (
-        <div className={panelStyles.empty}>未返回画像数据。</div>
+        <div className={panelStyles.empty}>No profile data returned.</div>
       )}
       {ids.length >= 1 && !isPending && !isError && option && (
         <ReactECharts style={{ height: "100%", minHeight: 260 }} option={option} notMerge />

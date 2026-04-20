@@ -1,19 +1,19 @@
-"""与 MC1_graph.json 导入 Neo4j 后的约定（可在 .env 覆盖）。"""
+"""与 MC1_graph.json 导入 Neo4j 后的约定（scripts/import_data.py 中的关系类型）。"""
 
-# JSON 边类型为 PascalCase，例如 PerformerOf、InStyleOf
+# API 请求里可用大写键；值为 Neo4j 中实际 type()（导入脚本为 UPPER_SNAKE_CASE）
 DEFAULT_REL_TYPES: dict[str, str] = {
-    "PERFORMER_OF": "PerformerOf",
-    "IN_STYLE_OF": "InStyleOf",
-    "INTERPOLATES_FROM": "InterpolatesFrom",
-    "COMPOSER_OF": "ComposerOf",
-    "LYRICIST_OF": "LyricistOf",
-    "RECORDED_BY": "RecordedBy",
-    "DISTRIBUTED_BY": "DistributedBy",
-    "COVER_OF": "CoverOf",
-    "LYRICAL_REFERENCE_TO": "LyricalReferenceTo",
-    "DIRECTLY_SAMPLES": "DirectlySamples",
-    "MEMBER_OF": "MemberOf",
-    "PRODUCER_OF": "ProducerOf",
+    "PERFORMER_OF": "PERFORMER_OF",
+    "IN_STYLE_OF": "IN_STYLE_OF",
+    "INTERPOLATES_FROM": "INTERPOLATES_FROM",
+    "COMPOSER_OF": "COMPOSER_OF",
+    "LYRICIST_OF": "LYRICIST_OF",
+    "RECORDED_BY": "RECORDED_BY",
+    "DISTRIBUTED_BY": "DISTRIBUTED_BY",
+    "COVER_OF": "COVER_OF",
+    "LYRICAL_REFERENCE_TO": "LYRICAL_REFERENCE_TO",
+    "DIRECTLY_SAMPLES": "DIRECTLY_SAMPLES",
+    "MEMBER_OF": "MEMBER_OF",
+    "PRODUCER_OF": "PRODUCER_OF",
 }
 
 DEFAULT_LABEL_PERSON = "Person"

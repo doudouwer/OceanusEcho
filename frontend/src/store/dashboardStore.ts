@@ -18,7 +18,7 @@ export interface DashboardState {
   toggleComparePerson: (id: string) => void;
   setFocusedTimeRange: (range: YearRange | null) => void;
   setHighlightSongIds: (ids: string[]) => void;
-  /** 与后端查询参数对齐的稳定序列化，供 React Query key 使用 */
+  /** Stable serialization aligned with backend query params for React Query keys */
   queryFingerprint: () => Record<string, string | number | boolean | null>;
 }
 
@@ -26,7 +26,7 @@ const DEFAULT_YEAR_RANGE: YearRange = [2023, 2040] as const;
 
 export const useDashboardStore = create<DashboardState>((set, get) => ({
   yearRange: DEFAULT_YEAR_RANGE,
-  /** 默认围绕 Oceanus Folk + Sailor 叙事 */
+  /** Default narrative: Oceanus Folk + Sailor */
   selectedGenres: ["Oceanus Folk"],
   focusedPersonId: DEFAULT_SAILOR_PERSON_ID,
   comparePersonIds: [],
@@ -36,7 +36,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   setYearRange: (yearRange) => set({ yearRange }),
   setSelectedGenres: (selectedGenres) => set({ selectedGenres }),
   setFocusedPersonId: (focusedPersonId) => set({ focusedPersonId }),
-  /** 回到 Silas 默认视角：Sailor + 清空对比与时间刷选 */
+  /** Reset to Silas default: Sailor focus, clear compare list and time brush */
   clearFocus: () =>
     set({
       focusedPersonId: DEFAULT_SAILOR_PERSON_ID,

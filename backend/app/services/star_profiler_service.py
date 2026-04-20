@@ -60,11 +60,13 @@ class StarProfilerService:
 
             time_filter = ""
             query_params = {"person_id": person_id}
+            # Align with repository / import: release_date may be string or number
+            year_expr = "toInteger(trim(toString(s.release_date)))"
             if start_year is not None:
-                time_filter += " AND toInteger(s.release_date) >= $start_year"
+                time_filter += f" AND {year_expr} >= $start_year"
                 query_params["start_year"] = start_year
             if end_year is not None:
-                time_filter += " AND toInteger(s.release_date) <= $end_year"
+                time_filter += f" AND {year_expr} <= $end_year"
                 query_params["end_year"] = end_year
 
             person_query = """
@@ -211,7 +213,11 @@ class StarProfilerService:
                 raw_value = float(getattr(profile.metrics, metric_name, 0))
                 min_val = min_vals[metric_name]
                 max_val = max_vals[metric_name]
-                normalized_metrics[metric_name] = round((raw_value - min_val) / (max_val - min_val), 3) if max_val > min_val else 0.0
+                if max_val > min_val:
+                    normalized_metrics[metric_name] = round((raw_value - min_val) / (max_val - min_val), 3)
+                else:
+                    # Single profile (or identical values): min-max is undefined; map non-zero raw to 1 so radar is visible
+                    normalized_metrics[metric_name] = 1.0 if raw_value else 0.0
             normalized_profiles.append(
                 {
                     "person_id": profile.person_id,

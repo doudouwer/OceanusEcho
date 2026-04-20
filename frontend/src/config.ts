@@ -1,10 +1,13 @@
-/** MC1 `Person.id`，导入 Neo4j 后为 `original_id` — 默认叙事主角 Sailor Shift */
+/** When true, use local demo data for chart shells (set false when backend is ready, or use real queries) */
+export const DEMO_MODE = import.meta.env.VITE_DEMO_MODE !== "false";
+
+/** MC1 `Person.id`, stored as `original_id` in Neo4j — default narrative lead Sailor Shift */
 export const DEFAULT_SAILOR_PERSON_ID =
   (import.meta.env.VITE_DEFAULT_PERSON_ID as string | undefined)?.trim() || "17255";
 
 export const DEFAULT_SAILOR_NAME = "Sailor Shift";
 
-/** Ivy Echoes 成员（同一数据源 id），用于一键加入对比 */
+/** Ivy Echoes members (same data-source ids) for one-click compare */
 export const IVY_ECHOES_BANDMATES: { id: string; name: string }[] = [
   { id: "17256", name: "Maya Jensen" },
   { id: "17257", name: "Lila \"Lilly\" Hartman" },

@@ -105,32 +105,32 @@ export function InfluenceGalaxyPanel() {
 
   const subtitle =
     focusedTimeRange != null
-      ? `细时间窗：${focusedTimeRange[0]}–${focusedTimeRange[1]} · POST /graph/subgraph`
-      : `全局年窗：${yearRange[0]}–${yearRange[1]} · POST /graph/subgraph`;
+      ? `Brushed range: ${focusedTimeRange[0]}–${focusedTimeRange[1]} · POST /graph/subgraph`
+      : `Global year window: ${yearRange[0]}–${yearRange[1]} · POST /graph/subgraph`;
 
   const statusLine = isPending
-    ? "正在加载子图…"
+    ? "Loading subgraph…"
     : isError
       ? error instanceof Error
         ? error.message
-        : "加载失败"
-      : `节点 ${graphData.nodes.length} · 边 ${graphData.links.length}`;
+        : "Failed to load"
+      : `${graphData.nodes.length} nodes · ${graphData.links.length} edges`;
 
   return (
     <PanelCard
-      title="影响力网络"
+      title="Influence network"
       tag="Influence Galaxy"
-      description="力导向子图：种子为当前聚焦艺人（可选）；流派取仪表盘所选。点击 Person / MusicalGroup 切换聚焦。"
+      description="Force-directed subgraph: seed is the current lead (optional); genres from the dashboard. Click Person / MusicalGroup to refocus."
     >
       <p style={{ margin: "0 0.5rem", fontSize: "0.75rem", color: "var(--text-muted)" }}>{subtitle}</p>
       <p style={{ margin: "0 0.5rem 0.25rem", fontSize: "0.7rem", color: "var(--text-muted)" }}>{statusLine}</p>
       <div ref={wrapRef} className={panelStyles.chart} style={{ minHeight: 280 }}>
         {isPending ? (
-          <div className={panelStyles.empty}>正在加载子图…</div>
+          <div className={panelStyles.empty}>Loading subgraph…</div>
         ) : isError ? (
           <div className={panelStyles.empty}>{statusLine}</div>
         ) : graphData.nodes.length === 0 ? (
-          <div className={panelStyles.empty}>子图为空，可调整年窗、流派或聚焦艺人后重试</div>
+          <div className={panelStyles.empty}>Subgraph is empty; try another year window, genres, or lead person.</div>
         ) : (
           <ForceGraph2D
             graphData={graphData}

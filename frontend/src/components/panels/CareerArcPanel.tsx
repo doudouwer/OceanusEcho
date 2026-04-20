@@ -39,7 +39,7 @@ export function CareerArcPanel() {
       textStyle: { color: "#e6f2f5" },
       tooltip: { trigger: "axis" },
       legend: {
-        data: ["作品数", "Notable"],
+        data: ["Song count", "Notable"],
         textStyle: { color: "#7a9aa8" },
         top: 0,
       },
@@ -60,7 +60,7 @@ export function CareerArcPanel() {
       },
       series: [
         {
-          name: "作品数",
+          name: "Song count",
           type: "line",
           smooth: true,
           areaStyle: { color: "rgba(90, 216, 232, 0.12)" },
@@ -79,20 +79,20 @@ export function CareerArcPanel() {
   }, [data, yearRange]);
 
   const hint = !focusedPersonId
-    ? "请在顶部搜索并选择聚焦艺人以加载职业时轴"
+    ? "Search and pick a lead artist at the top to load the career timeline"
     : isPending
-      ? "正在加载 /analysis/career-track …"
+      ? "Loading /analysis/career-track …"
       : isError
-        ? (error instanceof Error ? error.message : "加载失败")
+        ? (error instanceof Error ? error.message : "Failed to load")
         : data
-          ? `${data.person.name}（${data.person.id}）· 作品 ${data.summary?.total_works ?? data.works?.length ?? 0} 首`
+          ? `${data.person.name} (${data.person.id}) · ${data.summary?.total_works ?? data.works?.length ?? 0} works`
           : "";
 
   return (
     <PanelCard
-      title="职业时轴"
+      title="Career timeline"
       tag="Career Arc"
-      description="GET /api/v1/analysis/career-track：按年作品数与 Notable 计数；时间范围取仪表盘年窗。"
+      description="GET /api/v1/analysis/career-track: yearly song count and Notable counts; range follows the dashboard year window."
     >
       {!focusedPersonId ? (
         <div className={panelStyles.empty}>{hint}</div>
@@ -101,7 +101,7 @@ export function CareerArcPanel() {
       ) : isPending || !option ? (
         <div className={panelStyles.empty}>{hint}</div>
       ) : data.by_year.length === 0 ? (
-        <div className={panelStyles.empty}>该时间窗内无作品记录</div>
+        <div className={panelStyles.empty}>No works in this time window</div>
       ) : (
         <>
           <p style={{ margin: "0 0.5rem", fontSize: "0.75rem", color: "var(--text-muted)" }}>{hint}</p>
