@@ -22,21 +22,21 @@ class WorkItem(BaseModel):
     title: str
     release_date: str
     notable: bool
-    genre: str | None = None
+    genre: Optional[str] = None
 
 
 class CareerSummary(BaseModel):
-    first_release_year: int | None = None
-    first_notable_year: int | None = None
-    fame_gap_years: int | None = None
-    peak_year: int | None = None
+    first_release_year: Optional[int] = None
+    first_notable_year: Optional[int] = None
+    fame_gap_years: Optional[int] = None
+    peak_year: Optional[int] = None
     active_span_years: int = 0
     total_works: int = 0
 
 
 class CareerTrackData(BaseModel):
     person: PersonRef
-    summary: CareerSummary | None = None
+    summary: Optional[CareerSummary] = None
     by_year: list[YearAgg]
     works: list[WorkItem]
 
@@ -83,6 +83,13 @@ class PersonProfileRow(BaseModel):
     person_id: str
     name: str
     metrics: PersonProfileMetrics
+
+
+class PersonProfileNormalizedRow(BaseModel):
+    person_id: str
+    name: str
+    metrics: dict[str, float]
+    raw_metrics: dict[str, float]
 
 
 class PersonProfileData(BaseModel):

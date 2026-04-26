@@ -10,25 +10,38 @@ from contextlib import asynccontextmanager
 
 from .core.config import get_settings
 from .core.database import neo4j_connection
-from .api import career_arc, genre_flow, graph, search, star_profiler
+from .routers import analysis, graph, search
 
 settings = get_settings()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
     print("正在连接 Neo4j 数据库...")
-    neo4j_connection.connect()
-    neo4j_connection.verify_connectivity()
-    print("✓ Neo4j 连接成功")
-    
+    try:
+        neo4j_connection.connect()
+        if neo4j_connection.verify_connectivity():
+            print("✓ Neo4j 同步连接成功")
+    except Exception as e:
+        print(f"⚠ Neo4j 同步连接失败: {e}")
+
+    try:
+        neo4j_connection.connect_async()
+        async_driver = neo4j_connection.get_async_driver()
+        await async_driver.verify_connectivity()
+        app.state.neo4j_driver = async_driver
+        print("✓ Neo4j 异步驱动初始化成功")
+    except Exception as e:
+        app.state.neo4j_driver = None
+        print(f"⚠ Neo4j 异步驱动初始化失败: {e}")
+
     yield
-    
+
     print("关闭 Neo4j 连接...")
     neo4j_connection.close()
 
 
-# 创建 FastAPI 应用
 app = FastAPI(
     title="OceanusEcho API",
     description="""
@@ -38,13 +51,15 @@ app = FastAPI(
 
 ### 核心功能
 
+- **职业时轴 (Career Arc)**: 艺人职业轨迹与作品年表
+- **影响力网络 (Influence Galaxy)**: 关系网络与影响力分析
 - **流派演变 (Genre Flow)**: 桑基图和河流图数据
 - **艺人画像 (Star Profiler)**: 多维度艺人特征数据
 - **全局搜索**: Person 和 Song 搜索
 
 ### 技术栈
 
-- **框架**: FastAPI
+- **框架**: FastAPI (异步)
 - **数据库**: Neo4j
 - **数据格式**: JSON
 
@@ -60,38 +75,24 @@ app = FastAPI(
 )
 
 
-# 配置 CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 生产环境应限制为前端域名
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 注册路由
 app.include_router(
-    genre_flow.router,
+    analysis.router,
     prefix=settings.api_prefix,
-    tags=["流派演变 (Genre Flow)"]
-)
-
-app.include_router(
-    career_arc.router,
-    prefix=settings.api_prefix,
-    tags=["职业时轴 (Career Arc)"]
+    tags=["分析视图"]
 )
 
 app.include_router(
     graph.router,
     prefix=settings.api_prefix,
-    tags=["影响力网络 (Influence Galaxy)"]
-)
-
-app.include_router(
-    star_profiler.router,
-    prefix=settings.api_prefix,
-    tags=["艺人画像 (Star Profiler)"]
+    tags=["关系网络"]
 )
 
 app.include_router(
@@ -115,10 +116,12 @@ async def root():
 @app.get("/health", tags=["健康检查"])
 async def health_check():
     """健康检查端点"""
-    neo4j_status = "connected" if neo4j_connection.is_available() else "disconnected"
-    
+    sync_ok = neo4j_connection.verify_connectivity()
+    async_driver = getattr(app.state, "neo4j_driver", None)
+    async_ok = async_driver is not None
     return {
-        "status": "healthy",
-        "neo4j": neo4j_status,
+        "status": "healthy" if (sync_ok and async_ok) else "degraded",
+        "neo4j_sync": "connected" if sync_ok else "disconnected",
+        "neo4j_async": "connected" if async_ok else "disconnected",
         "api_prefix": settings.api_prefix
     }
