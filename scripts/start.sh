@@ -63,21 +63,6 @@ start_neo4j() {
     echo "  - 默认账号: neo4j / password"
 }
 
-# 在 backend 目录创建 venv、安装依赖（导入与 API 共用，须在 import_data 里先于 activate 调用）
-ensure_backend_venv() {
-    cd "$BACKEND_DIR" || exit 1
-    if [ ! -d "venv" ]; then
-        echo -e "${YELLOW}创建 Python 虚拟环境 (backend/venv)...${NC}"
-        python3 -m venv venv
-    fi
-    # shellcheck source=/dev/null
-    source venv/bin/activate
-    if ! pip install -r requirements.txt; then
-        echo -e "${RED}✗ 依赖安装失败${NC}"
-        exit 1
-    fi
-}
-
 # 导入数据（可选）
 import_data() {
     echo -e "\n${YELLOW}[2/3] 检查数据导入...${NC}"
@@ -89,8 +74,8 @@ import_data() {
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         echo -e "${YELLOW}开始导入数据...（可能需要几分钟）${NC}"
-        ensure_backend_venv
-        python -m scripts.import_data --path "$PROJECT_DIR/MC1_release/MC1_graph.json"
+        source venv/bin/activate
+        python -m scripts.import_data --path ../MC1_release/MC1_graph.json
         echo -e "${GREEN}✓ 数据导入完成${NC}"
     else
         echo -e "${YELLOW}跳过数据导入${NC}"
@@ -102,7 +87,20 @@ start_api() {
     echo -e "\n${YELLOW}[3/3] 启动 FastAPI 服务...${NC}"
 
     cd "$BACKEND_DIR"
-    ensure_backend_venv
+
+    # 检查虚拟环境
+    if [ ! -d "venv" ]; then
+        echo -e "${YELLOW}创建 Python 虚拟环境...${NC}"
+        python3 -m venv venv
+    fi
+
+    source venv/bin/activate
+
+    # 检查依赖
+    if ! pip install -r requirements.txt; then
+        echo -e "${RED}✗ 依赖安装失败${NC}"
+        exit 1
+    fi
 
     echo -e "${GREEN}✓ FastAPI 服务启动完成${NC}"
     echo -e "\n${GREEN}==========================================${NC}"

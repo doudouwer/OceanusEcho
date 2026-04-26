@@ -40,16 +40,28 @@
 ```json
 {
   "data": {
-    "nodes": [{ "id": "...", "label": "Person", "name": "...", "props": {} }],
-    "links": [{ "source": "...", "target": "...", "type": "IN_STYLE_OF", "props": {} }]
+    "graph": {
+      "nodes": [
+        { "id": "123", "label": "Person", "name": "Sailor Shift", "props": {} },
+        { "id": "456", "label": "Song", "name": "Moon Over the Tide", "props": {} }
+      ],
+      "links": [
+        { "source": "123", "target": "456", "type": "PERFORMER_OF", "props": {} }
+      ]
+    },
+    "seed_people": [],
+    "clusters": [],
+    "bridge_nodes": []
   },
-  "meta": { "truncated": false, "node_count": 120, "link_count": 340 }
+  "meta": { "truncated": false, "node_count": 2, "link_count": 1, "db": "connected" }
 }
 ```
 
 **说明**
 
-- `seed_person_ids` 可选：有则做 **k-hop 子图** 或 **可变半径** 采样；无则按时间+流派采样代表性子图（策略需在实现时固定并写进 README）。
+- 响应始终包装在 `{ graph: { nodes, links }, seed_people, clusters, bridge_nodes }` 结构中，与前端 `InfluenceGalaxyPayload` 类型对齐。
+- `seed_person_ids` 可选：有则做 **k-hop 子图** 或 **可变半径** 采样；无则按时间+流派采样代表性子图。
+- `label` 取值：`Person`、`MusicalGroup`、`Song`、`Album`、`RecordLabel`，由 `labels[0]` 优先级映射生成。
 - 边方向与多关系图（multigraph）需与 JSON 源数据一致。
 
 ---
@@ -83,6 +95,14 @@
 {
   "data": {
     "person": { "id": "...", "name": "Sailor Shift" },
+    "summary": {
+      "first_release_year": 2028,
+      "first_notable_year": 2028,
+      "fame_gap_years": null,
+      "peak_year": 2034,
+      "active_span_years": 13,
+      "total_works": 17
+    },
     "by_year": [
       { "year": 2028, "song_count": 5, "notable_count": 3, "genres": ["Oceanus Folk"] }
     ],
@@ -103,6 +123,7 @@
 **说明**
 
 - `by_year` 支撑趋势图；`works` 支撑甘特式细条（可按 release_date 排序）。
+- `summary` 包含职业汇总指标：`first_release_year`（首张专辑年份）、`first_notable_year`（首个成名作年份）、`peak_year`（产量最高年份）、`active_span_years`（活跃跨度）、`total_works`（总作品数）。
 - `notoriety_date` 若存在于数据源，可一并返回用于「成名耗时」辅助叙事。
 
 ---
@@ -154,10 +175,11 @@
 
 **查询参数**
 
-- `person_ids`：重复多次或逗号分隔
-- `start_year`, `end_year`
+- `person_ids`：逗号分隔（最多 20 个）。**第一个 ID 为锚点艺人**，其他艺人的指标均相对于锚点进行归一化
+- `start_year`, `end_year`：可选，限定时间窗口
+- `normalized`：布尔值，默认 `true`。开启时以锚点艺人的原始值为分母计算比率；关闭时返回原始值
 
-**响应（示例）**
+**响应（normalized=false，简明格式）**
 
 ```json
 {
@@ -172,20 +194,64 @@
           "active_years": 8,
           "unique_collaborators": 22,
           "genre_entropy": 1.2,
-          "degree": 30,
-          "pagerank": 0.004
+          "degree": 45,
+          "pagerank": 12.0
         }
       }
     ],
-    "dimensions": ["song_count", "notable_rate", "..."]
+    "dimensions": ["song_count", "notable_rate", "active_years", "unique_collaborators", "genre_entropy", "degree", "pagerank"]
   },
   "meta": {}
 }
 ```
 
-**说明**
+**响应（normalized=true，多艺人对比格式）**
 
-- 雷达图需前端对 `metrics` 做 **min-max 或分位数归一化**；后端可提供 `metrics_normalized` 简化前端。
+```json
+{
+  "data": {
+    "profiles": [
+      {
+        "person_id": "17255",
+        "name": "Sailor Shift",
+        "metrics": { "song_count": 1.0, "notable_rate": 1.0, ... },
+        "raw_metrics": { "song_count": 40, "notable_rate": 0.15, ... }
+      },
+      {
+        "person_id": "17256",
+        "name": "Maya Jensen",
+        "metrics": { "song_count": 0.5, "notable_rate": 0.8, ... },
+        "raw_metrics": { "song_count": 20, "notable_rate": 0.12, ... }
+      }
+    ],
+    "anchor_id": "17255",
+    "anchor_name": "Sailor Shift",
+    "dimensions": ["song_count", "notable_rate", "active_years", "unique_collaborators", "genre_entropy", "degree", "pagerank"],
+    "normalization": { "type": "ratio-to-anchor" }
+  },
+  "meta": {}
+}
+```
+
+**各维度定义与计算说明**
+
+| 维度 | 定义 | 计算方式 |
+|------|------|---------|
+| song_count | 时间窗内该艺人参与的歌曲总数 | Cypher 聚合（所有贡献关系） |
+| notable_rate | 参与歌曲中 notable 歌曲的比例 | `notable 歌曲数 / 总歌曲数` |
+| active_years | 有作品发布的年份去重数量 | 发行年份集合大小 |
+| unique_collaborators | 有过合作的独立艺人数量 | 所有关系类型（PERFORMER_OF / COMPOSER_OF / PRODUCER_OF / LYRICIST_OF / IN_STYLE_OF / MEMBER_OF / SIGNED_TO / INTERPOLATES_FROM）下的合作者去重 |
+| genre_entropy | 流派分布的香农熵（越高 = 流派越多元） | Python `_entropy()` 函数 |
+| degree | 全局图度数（所有关系、所有时间） | 原生 Cypher `count(DISTINCT r)` |
+| pagerank | 近似 PageRank：2 跳可达的 Person 节点数 | Cypher 2-hop 聚合 |
+
+**归一化说明**
+
+- `normalized=true` 时：`normalized_value = raw_value / anchor_value`（锚点艺人的该维度原始值）
+- 锚点艺人自身所有维度归一化值为 `1.0`
+- `> 1.0` 表示超过锚点，`< 1.0` 表示不如锚点
+- 若锚点该维度为 0，则归一化值为 `0.0`
+- 归一化类型由 `normalization.type` 标识为 `"ratio-to-anchor"`
 
 ---
 
@@ -195,7 +261,27 @@
 
 **查询参数**：`q`, `type`（person|song|all）, `limit`
 
-**响应**：候选列表，含 `id`、`label`、`subtitle`（如代表作年份）。
+**响应（示例）**
+
+```json
+{
+  "data": {
+    "results": [
+      { "id": "123", "label": "Sailor Shift", "type": "person", "subtitle": "Person" },
+      { "id": "456", "label": "Moon Over the Tide", "type": "song", "subtitle": "2034 · Oceanus Folk" }
+    ],
+    "total": 2,
+    "query": "Sailor"
+  },
+  "meta": { "db": "connected" }
+}
+```
+
+**说明**
+
+- `results` 中每个 `SearchHit` 包含 `id`、`label`、`type`（person|song）、`subtitle`（展示辅助信息如年份和流派）。
+- `total` 为本次返回的结果总数，`query` 为搜索关键词。
+- 搜索对 `Person.name` 和 `Song.name` 做 `CONTAINS` 模糊匹配（忽略大小写）。
 
 ---
 
