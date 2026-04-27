@@ -12,7 +12,7 @@
 - **主工作区**：四个 Panel 占位明确（四宫格或「1 大 + 3 小」），每个 Panel 有标题、简短说明、加载与空状态。
 - **联动原则**：任何全局筛选变化 → 所有 Panel **要么重新请求，要么用已拉取数据在客户端过滤**（需在实现上统一策略，见下文）。
 
-### 1.2 全局状态（建议字段）
+### 1.2 全局状态（当前实现 + 预留字段）
 
 | 字段 | 含义 | 典型驱动方 |
 |------|------|------------|
@@ -20,8 +20,8 @@
 | `selectedGenres` | 流派 id 或名称列表 | 多选框 |
 | `focusedPersonId` | 当前故事主角 | Galaxy 点击、搜索选中 |
 | `comparePersonIds` | 对比用 2–3 人 | Profiler 多选 |
-| `focusedTimeRange` | 刷选得到的细时间窗 | Career Arc brush |
-| `highlightSongIds` | 高亮歌曲 | 表格或图点击 |
+| `focusedTimeRange` | 细时间窗（预留） | 目前主要由 Galaxy 读取；Career 尚未写入 |
+| `highlightSongIds` | 高亮歌曲（预留） | 当前 UI 暂未消费 |
 
 实现可选用 **Zustand** 或 **Redux Toolkit**；关键是**序列化查询参数**与 API 对齐，便于缓存。
 
@@ -37,20 +37,19 @@
 - 区分**普通作品**与 **notable（成名/关键）作品**的分布，支撑「成名速度」「拐点年」叙事。
 - 可选：同图叠加**累计作品数、累计 notable 数**等多条折线，形成「多线趋势图」。
 
-**图表形态**
+**图表形态（当前）**
 
-- **甘特式条带**：横轴时间，纵轴可为「专辑/单曲轨道」或按作品一条横条（适合作品量适中时）。
-- **趋势层**：按年聚合 `song_count`、`notable_count` 的折线/面积图。
+- 按年聚合 `song_count`、`notable_count` 的双折线（含面积填充）+ dataZoom。
+- 甘特式作品条带属于后续可扩展项，当前未实现。
 
-**交互**
+**交互（当前）**
 
-- **Brush**：框选年份 → 更新 `focusedTimeRange`，其他 Panel 只显示该窗口内数据或高亮。
-- **点击作品条**：可设置 `highlightSongIds`，Galaxy 中高亮对应 Song 节点（若已加载）。
+- 由全局 `focusedPersonId` + `yearRange` 触发请求并重绘。
+- 暂未把 ECharts 的 brush/dataZoom 事件写回 store；`focusedTimeRange` 的写入仍是预留能力。
 
 **数据交互**
 
 - 初次进入 / `focusedPersonId` 或 `yearRange` 变化：请求 `GET /api/v1/analysis/career-track`（参数见后端文档）。
-- 若仅 Brush 且在客户端已有全量 career 数据：可只过滤本地，减少请求。
 
 ---
 
@@ -61,16 +60,16 @@
 - 展示**风格影响**（如 IN_STYLE_OF 指向/来自）、**表演关系**（PERFORMER_OF）、**成员/厂牌**等子集构成的子图。
 - 支持**钻取**：从种子节点展开邻居，避免一次加载全图。
 
-**图表形态**
+**图表形态（当前）**
 
-- **力导向图**：节点 = Person / Song / 可选 MusicalGroup；边 = 筛选后的关系类型集合。
-- 节点大小/颜色可映射 degree、notable 比例、流派等（与后端返回属性一致）。
+- 力导向图：节点覆盖 `Person` / `MusicalGroup` / `Song` / `Album` / `RecordLabel`。
+- 颜色按节点类别与 `cluster_id`（社区）着色；连线按关系类型着色。
 
-**交互**
+**交互（当前）**
 
-- **点击节点**：更新 `focusedPersonId`（Person）或展示 Song 详情并联动高亮。
-- **展开邻居**：对某 `node_id` 调用 expand 接口，合并 `nodes`/`links` 到当前图数据。
-- **与 Career 联动**：当存在 `focusedTimeRange` 时，可淡化窗口外节点或重新请求子图。
+- 点击 `Person` / `MusicalGroup`：更新 `focusedPersonId` 并调用 expand 增量展开。
+- 对已展开节点做去重，避免重复扩展。
+- `focusedTimeRange` 若已存在会优先覆盖 `yearRange` 发起请求；Career 面板当前尚未产出该值。
 
 **数据交互**
 
@@ -96,9 +95,9 @@
 - 时间范围变化 → **重新请求**聚合结果（流派流量对年份敏感）。
 - 点击某一链路 → 可选：过滤 Galaxy 只显示相关流派或打开明细列表。
 
-**数据交互**
+**数据交互（当前）**
 
-- `GET /api/v1/analysis/genre-flow`（或 `genre-sankey`）：参数含 `yearRange`、`metric`（songs | style_edges | hybrid 等，以后端枚举为准）。
+- `GET /api/v1/analysis/genre-flow`，`metric` 仅使用 `style_edges` 与 `genre_mix` 两种。
 
 ---
 
@@ -116,13 +115,13 @@
 
 **交互**
 
-- 从搜索或 Galaxy 添加对比人 → 更新 `comparePersonIds`。
+- 从顶部 Ivy Echoes 快捷按钮或搜索结果添加对比人 → 更新 `comparePersonIds`。
 - 切换全局 `yearRange` → 指标应基于**同一时间窗**重算（请求或缓存失效）。
 
-**数据交互**
+**数据交互（当前）**
 
-- `GET /api/v1/analysis/person-profile`：支持 `person_ids[]` 与 `yearRange`。
-- 或拆成 `batch` 单人多条再在前端合并（以后端设计为准）。
+- `GET /api/v1/analysis/person-profile`：使用逗号分隔参数 `person_ids=17255,17256`。
+- 默认 `normalized=true`，以第一个人作为锚点输出归一化雷达维度。
 
 ---
 
@@ -152,9 +151,9 @@
 
 | Panel | 主要 API | 依赖全局状态 |
 |-------|----------|----------------|
-| Career Arc | `career-track` | `focusedPersonId`, `yearRange`, `focusedTimeRange`（刷选） |
-| Influence Galaxy | `subgraph`, `expand` | `yearRange`, `selectedGenres`, `focusedPersonId`, `focusedTimeRange` |
-| Genre Flow | `genre-flow` / `genre-sankey` | `yearRange`, `selectedGenres` |
+| Career Arc | `career-track` | `focusedPersonId`, `yearRange` |
+| Influence Galaxy | `subgraph`, `expand` | `yearRange`, `selectedGenres`, `focusedPersonId`, `focusedTimeRange`（若存在） |
+| Genre Flow | `genre-flow` | `yearRange`, `selectedGenres` |
 | Star Profiler | `person-profile` | `comparePersonIds`, `yearRange` |
 | 全局搜索 | `search` | 写入 `focusedPersonId` 或 `comparePersonIds` |
 
@@ -164,4 +163,4 @@
 
 - 所有带年份的接口使用**同一闭区间语义**：`start_year`、`end_year` 包含端点。
 - 列表类返回统一 **分页或硬上限**，前端需处理 `truncated: true` 之类标志（若后端提供）。
-- **节点 id** 与图 JSON / Neo4j 内部 id 或业务 id 一致，并在文档中写死，避免前后端混用两种 id。
+- **节点 id** 当前约定为 `original_id` 字符串；仅在缺失时回退 `elementId`。前端按字符串处理并避免假设数值类型。

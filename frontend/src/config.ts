@@ -1,6 +1,3 @@
-/** When true, use local demo data for chart shells (set false when backend is ready, or use real queries) */
-export const DEMO_MODE = import.meta.env.VITE_DEMO_MODE !== "false";
-
 /** MC1 `Person.id`, stored as `original_id` in Neo4j — default narrative lead Sailor Shift */
 export const DEFAULT_SAILOR_PERSON_ID =
   (import.meta.env.VITE_DEFAULT_PERSON_ID as string | undefined)?.trim() || "17255";

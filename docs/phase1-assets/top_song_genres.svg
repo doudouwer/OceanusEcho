@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="488" viewBox="0 0 960 488">
+<defs>
+<linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+<stop offset="0%" stop-color="#f4efe6" />
+<stop offset="100%" stop-color="#eef7f7" />
+</linearGradient>
+<filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+<feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#9db3b7" flood-opacity="0.18"/>
+</filter>
+</defs>
+<rect width="960" height="488" fill="url(#bgGrad)"/>
+<circle cx="880" cy="70" r="120" fill="#e6f3f0" opacity="0.85"/>
+<circle cx="70" cy="438" r="110" fill="#f6e6d7" opacity="0.85"/>
+<text x="28" y="36" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="26" fill="#1e2a33" text-anchor="start">Top Song Genres</text>
+<text x="28" y="60" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" fill="#6a7c89">Genre diversity supports both overview and focused analysis</text>
+<rect x="20" y="78" width="920" height="390" rx="18" fill="#fffaf3" filter="url(#shadow)"/>
+<text x="38" y="106" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="15" font-weight="600" fill="#1e2a33">Distribution</text>
+<line x1="190" y1="132" x2="880" y2="132" stroke="#d9e1e7" stroke-width="10" stroke-linecap="round"/>
+<line x1="190" y1="132" x2="880.0" y2="132" stroke="#d9a441" stroke-width="10" stroke-linecap="round"/>
+<text x="176" y="136" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" fill="#1e2a33" text-anchor="end">Dream Pop</text>
+<text x="890.0" y="136" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" font-weight="600" fill="#5c6b73">590</text>
+<line x1="190" y1="166" x2="880" y2="166" stroke="#d9e1e7" stroke-width="10" stroke-linecap="round"/>
+<line x1="190" y1="166" x2="590.0" y2="166" stroke="#d9a441" stroke-width="10" stroke-linecap="round"/>
+<text x="176" y="170" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" fill="#1e2a33" text-anchor="end">Indie Folk</text>
+<text x="600.0" y="170" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" font-weight="600" fill="#5c6b73">342</text>
+<line x1="190" y1="200" x2="880" y2="200" stroke="#d9e1e7" stroke-width="10" stroke-linecap="round"/>
+<line x1="190" y1="200" x2="550.2" y2="200" stroke="#d9a441" stroke-width="10" stroke-linecap="round"/>
+<text x="176" y="204" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" fill="#1e2a33" text-anchor="end">Synthwave</text>
+<text x="560.2" y="204" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" font-weight="600" fill="#5c6b73">308</text>
+<line x1="190" y1="234" x2="880" y2="234" stroke="#d9e1e7" stroke-width="10" stroke-linecap="round"/>
+<line x1="190" y1="234" x2="503.4" y2="234" stroke="#d9a441" stroke-width="10" stroke-linecap="round"/>
+<text x="176" y="238" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" fill="#1e2a33" text-anchor="end">Doom Metal</text>
+<text x="513.4" y="238" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" font-weight="600" fill="#5c6b73">268</text>
+<line x1="190" y1="268" x2="880" y2="268" stroke="#d9e1e7" stroke-width="10" stroke-linecap="round"/>
+<line x1="190" y1="268" x2="464.8" y2="268" stroke="#d9a441" stroke-width="10" stroke-linecap="round"/>
+<text x="176" y="272" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" fill="#1e2a33" text-anchor="end">Oceanus Folk</text>
+<text x="474.8" y="272" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" font-weight="600" fill="#5c6b73">235</text>
+<line x1="190" y1="302" x2="880" y2="302" stroke="#d9e1e7" stroke-width="10" stroke-linecap="round"/>
+<line x1="190" y1="302" x2="429.7" y2="302" stroke="#d9a441" stroke-width="10" stroke-linecap="round"/>
+<text x="176" y="306" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" fill="#1e2a33" text-anchor="end">Alternative Rock</text>
+<text x="439.7" y="306" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" font-weight="600" fill="#5c6b73">205</text>
+<line x1="190" y1="336" x2="880" y2="336" stroke="#d9e1e7" stroke-width="10" stroke-linecap="round"/>
+<line x1="190" y1="336" x2="406.4" y2="336" stroke="#d9a441" stroke-width="10" stroke-linecap="round"/>
+<text x="176" y="340" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" fill="#1e2a33" text-anchor="end">Southern Gothic Rock</text>
+<text x="416.4" y="340" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" font-weight="600" fill="#5c6b73">185</text>
+<line x1="190" y1="370" x2="880" y2="370" stroke="#d9e1e7" stroke-width="10" stroke-linecap="round"/>
+<line x1="190" y1="370" x2="372.4" y2="370" stroke="#d9a441" stroke-width="10" stroke-linecap="round"/>
+<text x="176" y="374" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" fill="#1e2a33" text-anchor="end">Indie Rock</text>
+<text x="382.4" y="374" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" font-weight="600" fill="#5c6b73">156</text>
+<line x1="190" y1="404" x2="880" y2="404" stroke="#d9e1e7" stroke-width="10" stroke-linecap="round"/>
+<line x1="190" y1="404" x2="359.6" y2="404" stroke="#d9a441" stroke-width="10" stroke-linecap="round"/>
+<text x="176" y="408" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" fill="#1e2a33" text-anchor="end">Americana</text>
+<text x="369.6" y="408" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" font-weight="600" fill="#5c6b73">145</text>
+<line x1="190" y1="438" x2="880" y2="438" stroke="#d9e1e7" stroke-width="10" stroke-linecap="round"/>
+<line x1="190" y1="438" x2="353.7" y2="438" stroke="#d9a441" stroke-width="10" stroke-linecap="round"/>
+<text x="176" y="442" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" fill="#1e2a33" text-anchor="end">Psychedelic Rock</text>
+<text x="363.7" y="442" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" font-weight="600" fill="#5c6b73">140</text>
+</svg>

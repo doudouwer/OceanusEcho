@@ -75,7 +75,8 @@ export async function fetchSearch(
   type: "person" | "song" | "all" = "all",
   limit = 20,
 ): Promise<SearchResponseBody> {
-  return apiGet<SearchResponseBody>("/search", { q, type, limit });
+  const res = await apiGet<ApiEnvelope<SearchResponseBody>>("/search", { q, type, limit });
+  return res.data;
 }
 
 export type CareerYearAgg = {
@@ -133,8 +134,19 @@ export type GalaxyGraphLink = {
 export type InfluenceGalaxyPayload = {
   graph: { nodes: GalaxyGraphNode[]; links: GalaxyGraphLink[] };
   seed_people?: { id: string; name: string }[];
-  clusters?: unknown[];
-  bridge_nodes?: unknown[];
+  clusters?: {
+    component_id: number;
+    node_count: number;
+    edge_count: number;
+    sample_nodes: { id: string; name: string }[];
+  }[];
+  bridge_nodes?: {
+    node_id: string;
+    name: string;
+    label: string;
+    bridge_score: number;
+    degree: number;
+  }[];
 };
 
 export async function fetchInfluenceSubgraph(params: {
@@ -143,6 +155,7 @@ export async function fetchInfluenceSubgraph(params: {
   genres: string[];
   seed_person_ids: string[];
   rel_types?: string[];
+  max_hops?: number;
   limit_nodes?: number;
   only_notable_songs?: boolean;
 }): Promise<InfluenceGalaxyPayload> {
@@ -152,8 +165,34 @@ export async function fetchInfluenceSubgraph(params: {
     genres: params.genres,
     seed_person_ids: params.seed_person_ids,
     rel_types: params.rel_types ?? [],
+    max_hops: params.max_hops ?? 2,
     limit_nodes: params.limit_nodes ?? 500,
     only_notable_songs: params.only_notable_songs ?? false,
   });
+  return res.data;
+}
+
+export async function fetchInfluenceExpand(params: {
+  node_id: string;
+  rel_types?: string[];
+  direction?: "out" | "in" | "both";
+  limit?: number;
+  start_year?: number;
+  end_year?: number;
+  genres?: string[];
+  only_notable_songs?: boolean;
+}): Promise<InfluenceGalaxyPayload> {
+  const res = await apiGet<ApiEnvelope<InfluenceGalaxyPayload>>(
+    `/graph/expand/${encodeURIComponent(params.node_id)}`,
+    {
+      rel_types: params.rel_types?.join(","),
+      direction: params.direction ?? "both",
+      limit: params.limit ?? 180,
+      start_year: params.start_year,
+      end_year: params.end_year,
+      genres: params.genres?.join(","),
+      only_notable_songs: params.only_notable_songs ?? false,
+    },
+  );
   return res.data;
 }

@@ -24,14 +24,14 @@
 
 - **栈**：Vite 5、React 18、TypeScript、Zustand、TanStack Query、ECharts、`react-force-graph-2d`。
 - **开发**：`cd frontend && npm install && npm run dev`，默认 <http://localhost:5173>；`/api` 已代理到 `http://127.0.0.1:8000`（后端就绪后可直接联调）。
-- **演示数据**：`frontend/.env.development` 中 `VITE_DEMO_MODE=true`（默认）时 Career / Galaxy / Genre / Profiler 使用占位图；接好 FastAPI 后设 `VITE_DEMO_MODE=false` 并配置 `VITE_API_BASE_URL`（可选，未配则走相对路径 `/api/v1`）。
+- **数据模式**：当前默认就是在线模式，不再维护前端离线占位图 fallback。前端所有 Panel 直接请求 `/api/v1`。
 
 ### 后端工程（`backend/`）
 
 - **栈**：FastAPI、Neo4j Python Driver（异步）、Pydantic Settings。
 - **启动**：`cd backend && python3 -m venv .venv && source .venv/bin/activate`（Windows 用 `.venv\Scripts\activate`），`pip install -r requirements.txt`，再执行  
   `uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`。
-- **环境变量**：复制 `backend/.env.example` 为 `backend/.env`，填写 `NEO4J_PASSWORD`。未配置或无法连通时，`/health` 中 `neo4j` 为 `offline`，各接口仍返回与 OpenAPI 一致的空数据结构（`meta.db=offline`）。
+- **环境变量**：复制 `backend/.env.example` 为 `backend/.env`，填写 `NEO4J_PASSWORD`。后端采用在线严格模式：启动时会等待 Neo4j，若不可达则启动失败；运行中健康检查会返回 `503`。
 - **OpenAPI**：启动后访问 <http://127.0.0.1:8000/docs>。
 - **图模型约定**：Cypher 按 MC1 导入后的标签 `Person` / `Song` 与关系 `PerformerOf`、`InStyleOf` 编写（与 `MC1_graph.json` 中 `Node Type` / `Edge Type` 一致）。若导入脚本使用不同命名，请改 `app/constants.py` 或查询语句。
 
@@ -115,7 +115,10 @@ pip install -r requirements.txt
 
 # 启动 Neo4j
 docker compose up -d neo4j
-sleep 30  # 等待 Neo4j 启动
+until docker exec oceanecho-neo4j cypher-shell -u neo4j -p password "RETURN 1;" >/dev/null 2>&1; do
+  echo "waiting neo4j bolt ready..."
+  sleep 1
+done
 
 # 导入数据
 python -m scripts.import_data --path ../MC1_release/MC1_graph.json
@@ -129,3 +132,17 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - API 文档: http://localhost:8000/docs
 - Neo4j Browser: http://localhost:7474
 - Neo4j 账号: neo4j / password
+
+### 功能验证与效果预览
+
+在后端与 Neo4j 启动后，可运行：
+
+```bash
+cd backend
+python -m scripts.test_services
+```
+
+该脚本会：
+- 验证 `/health`、搜索、Career、Genre、Person Profile 接口是否可用
+- 重点验证 `Influence Galaxy` 的 `subgraph + expand` 是否生效
+- 输出社区/桥接节点摘要并把完整 JSON 结果写到 `/tmp/oceanusecho-preview/...`

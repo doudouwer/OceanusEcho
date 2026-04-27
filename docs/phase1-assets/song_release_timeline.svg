@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="420" viewBox="0 0 1100 420">
+<defs>
+<linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+<stop offset="0%" stop-color="#f4efe6" />
+<stop offset="100%" stop-color="#eef7f7" />
+</linearGradient>
+<filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+<feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#9db3b7" flood-opacity="0.18"/>
+</filter>
+</defs>
+<rect width="1100" height="420" fill="url(#bgGrad)"/>
+<circle cx="1020" cy="70" r="120" fill="#e6f3f0" opacity="0.85"/>
+<circle cx="70" cy="370" r="110" fill="#f6e6d7" opacity="0.85"/>
+<text x="28" y="36" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="26" fill="#1e2a33" text-anchor="start">Song Releases by Year</text>
+<text x="28" y="60" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" fill="#6a7c89">Temporal distribution of song releases</text>
+<rect x="20" y="78" width="1060" height="322" rx="18" fill="#fffaf3" filter="url(#shadow)"/>
+<text x="38" y="106" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="15" font-weight="600" fill="#1e2a33">Release Timeline</text>
+<line x1="70" y1="364" x2="1066" y2="364" stroke="#b8c4ce" />
+<line x1="70" y1="124" x2="70" y2="364" stroke="#b8c4ce" />
+<line x1="70" y1="364.0" x2="1066" y2="364.0" stroke="#d9e1e7" />
+<text x="62" y="368.0" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="11" fill="#1e2a33" text-anchor="end">0</text>
+<line x1="70" y1="304.0" x2="1066" y2="304.0" stroke="#d9e1e7" />
+<text x="62" y="308.0" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="11" fill="#1e2a33" text-anchor="end">83</text>
+<line x1="70" y1="244.0" x2="1066" y2="244.0" stroke="#d9e1e7" />
+<text x="62" y="248.0" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="11" fill="#1e2a33" text-anchor="end">166</text>
+<line x1="70" y1="184.0" x2="1066" y2="184.0" stroke="#d9e1e7" />
+<text x="62" y="188.0" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="11" fill="#1e2a33" text-anchor="end">249</text>
+<line x1="70" y1="124.0" x2="1066" y2="124.0" stroke="#d9e1e7" />
+<text x="62" y="128.0" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="11" fill="#1e2a33" text-anchor="end">332</text>
+<rect x="71.0" y="360.4" width="13.6" height="3.6" rx="2" fill="#d97b4d" />
+<text x="78.78125" y="382" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="10" fill="#1e2a33" text-anchor="middle">1975</text>
+<rect x="86.6" y="361.1" width="13.6" height="2.9" rx="2" fill="#d97b4d" />
+<rect x="102.1" y="360.4" width="13.6" height="3.6" rx="2" fill="#d97b4d" />
+<rect x="117.7" y="361.8" width="13.6" height="2.2" rx="2" fill="#d97b4d" />
+<rect x="133.2" y="357.5" width="13.6" height="6.5" rx="2" fill="#d97b4d" />
+<rect x="148.8" y="361.8" width="13.6" height="2.2" rx="2" fill="#d97b4d" />
+<text x="156.59375" y="382" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="10" fill="#1e2a33" text-anchor="middle">1982</text>
+<rect x="164.4" y="361.8" width="13.6" height="2.2" rx="2" fill="#d97b4d" />
+<rect x="179.9" y="349.5" width="13.6" height="14.5" rx="2" fill="#d97b4d" />
+<rect x="195.5" y="354.6" width="13.6" height="9.4" rx="2" fill="#d97b4d" />
+<rect x="211.1" y="358.2" width="13.6" height="5.8" rx="2" fill="#d97b4d" />
+<rect x="226.6" y="345.2" width="13.6" height="18.8" rx="2" fill="#d97b4d" />
+<text x="234.40625" y="382" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="10" fill="#1e2a33" text-anchor="middle">1987</text>
+<rect x="242.2" y="362.6" width="13.6" height="1.4" rx="2" fill="#d97b4d" />
+<rect x="257.8" y="355.3" width="13.6" height="8.7" rx="2" fill="#d97b4d" />
+<rect x="273.3" y="359.7" width="13.6" height="4.3" rx="2" fill="#d97b4d" />
+<rect x="288.9" y="340.1" width="13.6" height="23.9" rx="2" fill="#d97b4d" />
+<rect x="304.4" y="353.9" width="13.6" height="10.1" rx="2" fill="#d97b4d" />
+<text x="312.21875" y="382" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="10" fill="#1e2a33" text-anchor="middle">1992</text>
+<rect x="320.0" y="355.3" width="13.6" height="8.7" rx="2" fill="#d97b4d" />
+<rect x="335.6" y="340.1" width="13.6" height="23.9" rx="2" fill="#d97b4d" />
+<rect x="351.1" y="354.6" width="13.6" height="9.4" rx="2" fill="#d97b4d" />
+<rect x="366.7" y="353.2" width="13.6" height="10.8" rx="2" fill="#d97b4d" />
+<rect x="382.2" y="320.6" width="13.6" height="43.4" rx="2" fill="#d97b4d" />
+<text x="390.03125" y="382" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="10" fill="#1e2a33" text-anchor="middle">1997</text>
+<rect x="397.8" y="356.0" width="13.6" height="8.0" rx="2" fill="#d97b4d" />
+<rect x="413.4" y="353.2" width="13.6" height="10.8" rx="2" fill="#d97b4d" />
+<rect x="428.9" y="323.5" width="13.6" height="40.5" rx="2" fill="#d97b4d" />
+<rect x="444.5" y="355.3" width="13.6" height="8.7" rx="2" fill="#d97b4d" />
+<rect x="460.1" y="352.4" width="13.6" height="11.6" rx="2" fill="#d97b4d" />
+<text x="467.84375" y="382" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="10" fill="#1e2a33" text-anchor="middle">2002</text>
+<rect x="475.6" y="341.6" width="13.6" height="22.4" rx="2" fill="#d97b4d" />
+<rect x="491.2" y="292.4" width="13.6" height="71.6" rx="2" fill="#d97b4d" />
+<rect x="506.8" y="348.1" width="13.6" height="15.9" rx="2" fill="#d97b4d" />
+<rect x="522.3" y="350.3" width="13.6" height="13.7" rx="2" fill="#d97b4d" />
+<rect x="537.9" y="281.6" width="13.6" height="82.4" rx="2" fill="#d97b4d" />
+<text x="545.65625" y="382" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="10" fill="#1e2a33" text-anchor="middle">2007</text>
+<rect x="553.4" y="346.7" width="13.6" height="17.3" rx="2" fill="#d97b4d" />
+<rect x="569.0" y="340.1" width="13.6" height="23.9" rx="2" fill="#d97b4d" />
+<rect x="584.6" y="254.1" width="13.6" height="109.9" rx="2" fill="#d97b4d" />
+<rect x="600.1" y="343.0" width="13.6" height="21.0" rx="2" fill="#d97b4d" />
+<rect x="615.7" y="336.5" width="13.6" height="27.5" rx="2" fill="#d97b4d" />
+<text x="623.46875" y="382" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="10" fill="#1e2a33" text-anchor="middle">2012</text>
+<rect x="631.2" y="199.9" width="13.6" height="164.1" rx="2" fill="#d97b4d" />
+<rect x="646.8" y="332.9" width="13.6" height="31.1" rx="2" fill="#d97b4d" />
+<rect x="662.4" y="334.4" width="13.6" height="29.6" rx="2" fill="#d97b4d" />
+<rect x="677.9" y="332.9" width="13.6" height="31.1" rx="2" fill="#d97b4d" />
+<rect x="693.5" y="188.3" width="13.6" height="175.7" rx="2" fill="#d97b4d" />
+<text x="701.28125" y="382" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="10" fill="#1e2a33" text-anchor="middle">2017</text>
+<rect x="709.1" y="320.6" width="13.6" height="43.4" rx="2" fill="#d97b4d" />
+<rect x="724.6" y="320.6" width="13.6" height="43.4" rx="2" fill="#d97b4d" />
+<rect x="740.2" y="172.4" width="13.6" height="191.6" rx="2" fill="#d97b4d" />
+<rect x="755.8" y="325.7" width="13.6" height="38.3" rx="2" fill="#d97b4d" />
+<rect x="771.3" y="304.0" width="13.6" height="60.0" rx="2" fill="#d97b4d" />
+<text x="779.09375" y="382" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="10" fill="#1e2a33" text-anchor="middle">2022</text>
+<rect x="786.9" y="124.0" width="13.6" height="240.0" rx="2" fill="#d97b4d" />
+<rect x="802.4" y="262.1" width="13.6" height="101.9" rx="2" fill="#d97b4d" />
+<rect x="818.0" y="275.8" width="13.6" height="88.2" rx="2" fill="#d97b4d" />
+<rect x="833.6" y="177.5" width="13.6" height="186.5" rx="2" fill="#d97b4d" />
+<rect x="849.1" y="254.1" width="13.6" height="109.9" rx="2" fill="#d97b4d" />
+<text x="856.90625" y="382" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="10" fill="#1e2a33" text-anchor="middle">2027</text>
+<rect x="864.7" y="269.3" width="13.6" height="94.7" rx="2" fill="#d97b4d" />
+<rect x="880.2" y="215.8" width="13.6" height="148.2" rx="2" fill="#d97b4d" />
+<rect x="895.8" y="325.7" width="13.6" height="38.3" rx="2" fill="#d97b4d" />
+<rect x="911.4" y="343.8" width="13.6" height="20.2" rx="2" fill="#d97b4d" />
+<rect x="926.9" y="354.6" width="13.6" height="9.4" rx="2" fill="#d97b4d" />
+<text x="934.71875" y="382" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="10" fill="#1e2a33" text-anchor="middle">2032</text>
+<rect x="942.5" y="350.3" width="13.6" height="13.7" rx="2" fill="#d97b4d" />
+<rect x="958.1" y="349.5" width="13.6" height="14.5" rx="2" fill="#d97b4d" />
+<rect x="973.6" y="348.8" width="13.6" height="15.2" rx="2" fill="#d97b4d" />
+<rect x="989.2" y="353.9" width="13.6" height="10.1" rx="2" fill="#d97b4d" />
+<rect x="1004.8" y="359.7" width="13.6" height="4.3" rx="2" fill="#d97b4d" />
+<text x="1012.53125" y="382" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="10" fill="#1e2a33" text-anchor="middle">2037</text>
+<rect x="1020.3" y="359.7" width="13.6" height="4.3" rx="2" fill="#d97b4d" />
+<rect x="1035.9" y="361.1" width="13.6" height="2.9" rx="2" fill="#d97b4d" />
+<rect x="1051.4" y="362.6" width="13.6" height="1.4" rx="2" fill="#d97b4d" />
+</svg>

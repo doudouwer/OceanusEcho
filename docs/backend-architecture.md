@@ -2,6 +2,8 @@
 
 栈：**FastAPI** 提供 HTTP API；**Neo4j** 存储图与属性；复杂聚合在 **Cypher** 中完成，必要时对高度重复指标做**预计算**写入节点属性。
 
+当前后端采用在线严格模式：Neo4j 未就绪时服务启动失败（fail fast），`/health` 在连接异常时返回 HTTP `503`。
+
 ---
 
 ## 一、接口层职责
@@ -30,6 +32,7 @@
   "genres": ["Oceanus Folk", "Indie Pop"],
   "seed_person_ids": [123],
   "rel_types": ["IN_STYLE_OF", "PERFORMER_OF"],
+  "max_hops": 2,
   "limit_nodes": 800,
   "only_notable_songs": false
 }
@@ -60,7 +63,9 @@
 **说明**
 
 - 响应始终包装在 `{ graph: { nodes, links }, seed_people, clusters, bridge_nodes }` 结构中，与前端 `InfluenceGalaxyPayload` 类型对齐。
-- `seed_person_ids` 可选：有则做 **k-hop 子图** 或 **可变半径** 采样；无则按时间+流派采样代表性子图。
+- `rel_types` 会被严格校验并映射到 Neo4j 关系类型；空数组时默认使用系统允许的全部关系类型。
+- `seed_person_ids` 可选：有则先抽取候选图，再按 `max_hops` 对 seed 做 BFS 裁剪。
+- 返回会附带 `clusters`（人节点投影后的连通社区）和 `bridge_nodes`（桥接节点评分 Top-N）。
 - `label` 取值：`Person`、`MusicalGroup`、`Song`、`Album`、`RecordLabel`，由 `labels[0]` 优先级映射生成。
 - 边方向与多关系图（multigraph）需与 JSON 源数据一致。
 
@@ -75,6 +80,9 @@
 - `rel_types`：逗号分隔
 - `direction`：`out` | `in` | `both`
 - `limit`：默认 200
+- `start_year`, `end_year`：可选；若提供则对 Song 节点按年份过滤
+- `genres`：可选；逗号分隔，限制 Song.genre
+- `only_notable_songs`：可选；仅展开 notable Song 相关关系
 
 **响应**：与 `subgraph` 相同的 `nodes`/`links` 增量集合（前端合并去重）。
 
@@ -135,7 +143,7 @@
 **查询参数**
 
 - `start_year`, `end_year`
-- `metric`：`style_edges` | `song_cowrite` | `genre_mix`（具体实现选一种主指标，其余可二期）
+- `metric`：`style_edges` | `genre_mix`（当前实现）
 - `source_genre`：可选，聚焦 Oceanus Folk 等
 
 **响应（桑基，示例）**
@@ -240,7 +248,7 @@
 | song_count | 时间窗内该艺人参与的歌曲总数 | Cypher 聚合（所有贡献关系） |
 | notable_rate | 参与歌曲中 notable 歌曲的比例 | `notable 歌曲数 / 总歌曲数` |
 | active_years | 有作品发布的年份去重数量 | 发行年份集合大小 |
-| unique_collaborators | 有过合作的独立艺人数量 | 所有关系类型（PERFORMER_OF / COMPOSER_OF / PRODUCER_OF / LYRICIST_OF / IN_STYLE_OF / MEMBER_OF / SIGNED_TO / INTERPOLATES_FROM）下的合作者去重 |
+| unique_collaborators | 有过合作的独立艺人数量 | 所有关系类型（PERFORMER_OF / COMPOSER_OF / PRODUCER_OF / LYRICIST_OF / IN_STYLE_OF / MEMBER_OF / INTERPOLATES_FROM）下的合作者去重 |
 | genre_entropy | 流派分布的香农熵（越高 = 流派越多元） | Python `_entropy()` 函数 |
 | degree | 全局图度数（所有关系、所有时间） | 原生 Cypher `count(DISTINCT r)` |
 | pagerank | 近似 PageRank：2 跳可达的 Person 节点数 | Cypher 2-hop 聚合 |
@@ -298,19 +306,21 @@
 - `Song`：`release_date`, `genre`, `notable`, `single`, `name`
 - `Person`：`name`；若有 `stage_name` 需合并策略
 
-**关系类型（示例）**
+**关系类型（导入脚本当前映射）**
 
 - `PERFORMER_OF`（Person→Song）
 - `IN_STYLE_OF`（风格影响，方向需与叙事「谁影响谁」一致）
-- `MEMBER_OF`, `SIGNED_TO` 等（按源数据 12 类关系完整导入）
+- `COMPOSER_OF`、`LYRICIST_OF`、`PRODUCER_OF`、`MEMBER_OF`
+- `RECORDED_BY`、`DISTRIBUTED_BY`
+- `INTERPOLATES_FROM`、`LYRICAL_REFERENCE_TO`、`COVER_OF`、`DIRECTLY_SAMPLES`
 
-导入时保留源数据中的 **数值 `id`** 或生成稳定 `id` 字符串，与 API 中 `node_id` 一致。
+导入时将源数据 `id` 写入 `original_id`。后端 API 节点 `id` 优先返回 `original_id`，仅在缺失时回退到 `elementId`。
 
 ---
 
 ### 3.2 索引与约束
 
-- **唯一性**：`Person(original_id)` 或 `Person(name)` 用约束。
+- **唯一性**：`Person(original_id)`、`Song(original_id)` 用约束。
 - **查找**：`Song(release_date)`、`Song(genre)` 复合场景可拆为多索引。
 - **全文**：对 `Person.name`、`Song.name` 建全文索引以支持 `/search`。
 
@@ -366,7 +376,7 @@ SET g.inferred_genre = head(collect(genre))[0]
 
 ### 3.4 典型 Cypher 思路（非最终实现）
 
-- **Career track**：`MATCH (p:Person)-[:PERFORMER_OF]->(s:Song) WHERE id(p)=$pid AND s.release_date IN range` → `WITH substring(s.release_date,0,4) AS year` 聚合。
+- **Career track**：`MATCH (p:Person)-[:PERFORMER_OF]->(s:Song) WHERE toString(p.original_id)=$pid AND s.release_date IN range` → `WITH substring(s.release_date,0,4) AS year` 聚合。
 - **Genre sankey**：在时间窗内 `MATCH (s1:Song)-[:IN_STYLE_OF]->(p:Person)<-[:IN_STYLE_OF]-(s2:Song)` 或直接使用「流派→流派」聚合规则（以实现时选定的语义为准）。
 - **Subgraph**：`CALL apoc.path.subgraphAll`（若使用 APOC）或限定 `LIMIT` 的 `MATCH` 模式。
 
@@ -401,8 +411,8 @@ SET g.inferred_genre = head(collect(genre))[0]
 
 | Panel | 主要端点 |
 |-------|----------|
-| Career Arc | `GET /analysis/career-track` |
-| Influence Galaxy | `POST /graph/subgraph`, `GET /graph/expand/{node_id}` |
-| Genre Flow | `GET /analysis/genre-flow` |
-| Star Profiler | `GET /analysis/person-profile` |
-| 全局搜索 | `GET /search` |
+| Career Arc | `GET /api/v1/analysis/career-track` |
+| Influence Galaxy | `POST /api/v1/graph/subgraph`, `GET /api/v1/graph/expand/{node_id}` |
+| Genre Flow | `GET /api/v1/analysis/genre-flow` |
+| Star Profiler | `GET /api/v1/analysis/person-profile` |
+| 全局搜索 | `GET /api/v1/search` |
