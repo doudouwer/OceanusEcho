@@ -36,12 +36,16 @@ class Neo4jConnection:
             )
 
     def close(self) -> None:
-        """关闭所有数据库连接"""
+        """关闭同步数据库连接"""
         if self._driver is not None:
             self._driver.close()
             self._driver = None
+
+    async def close_async(self) -> None:
+        """关闭同步 + 异步数据库连接"""
+        self.close()
         if self._async_driver is not None:
-            self._async_driver.close()
+            await self._async_driver.close()
             self._async_driver = None
 
     def get_driver(self):

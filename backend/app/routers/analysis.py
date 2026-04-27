@@ -60,7 +60,7 @@ def _build_meta(**kwargs) -> ApiMeta:
 @router.get("/career-track", response_model=ApiResponse)
 async def get_career_track(
     request: Request,
-    person_id: Optional[str] = Query(None, description="艺人 ID（original_id 或内部 id）"),
+    person_id: Optional[str] = Query(None, description="艺人 ID（original_id）"),
     person_name: Optional[str] = Query(None, description="艺人姓名"),
     start_year: int = Query(2023, ge=1900, le=2200),
     end_year: int = Query(2040, ge=1900, le=2200),
@@ -77,7 +77,7 @@ async def get_career_track(
     async with driver.session() as session:
         cypher = """
         MATCH (p:Person)
-        WHERE ($pid IS NULL OR toString(p.original_id) = $pid OR toString(p.id) = $pid)
+        WHERE ($pid IS NULL OR toString(p.original_id) = $pid)
           AND ($pname IS NULL OR p.name = $pname)
         MATCH (p)-[:PERFORMER_OF]->(s:Song)
         WHERE toInteger(trim(toString(s.release_date))) >= $sy
@@ -309,14 +309,14 @@ async def get_person_profile(
     all_rel_types = [
         "PERFORMER_OF", "COMPOSER_OF", "PRODUCER_OF",
         "LYRICIST_OF", "IN_STYLE_OF", "MEMBER_OF",
-        "SIGNED_TO", "INTERPOLATES_FROM",
+        "INTERPOLATES_FROM",
     ]
 
     async with driver.session() as session:
         for pid in id_list:
             cypher = f"""
             MATCH (p:Person)
-            WHERE toString(p.original_id) = $pid OR toString(p.id) = $pid OR p.name = $pid
+            WHERE toString(p.original_id) = $pid OR p.name = $pid
 
             // 1) 时间窗内的歌曲（含所有贡献关系）
             OPTIONAL MATCH (p)-[r1]-(s:Song)
@@ -338,7 +338,7 @@ async def get_person_profile(
                  count(DISTINCT r3) AS raw_degree
 
             // 4) 近似 PageRank：2 跳可达的不同 Person 节点数
-            OPTIONAL MATCH (p)-[:PERFORMER_OF|COMPOSER_OF|PRODUCER_OF|LYRICIST_OF|MEMBER_OF|SIGNED_TO|IN_STYLE_OF|INTERPOLATES_FROM*1..2]-(neighbor)
+            OPTIONAL MATCH (p)-[:PERFORMER_OF|COMPOSER_OF|PRODUCER_OF|LYRICIST_OF|MEMBER_OF|IN_STYLE_OF|INTERPOLATES_FROM*1..2]-(neighbor)
             WHERE neighbor:Person
             WITH p, songs, others, raw_degree,
                  count(DISTINCT neighbor) AS pagerank_proxy

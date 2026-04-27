@@ -28,6 +28,7 @@ class SubgraphRequest(BaseModel):
     genres: list[str] = Field(default_factory=list)
     seed_person_ids: list[str] = Field(default_factory=list)
     rel_types: list[str] = Field(default_factory=list)
+    max_hops: int = Field(default=2, ge=1, le=4)
     limit_nodes: int = Field(default=800, ge=1, le=20_000)
     only_notable_songs: bool = False
 
