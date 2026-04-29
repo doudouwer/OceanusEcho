@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420">
+<defs>
+<linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+<stop offset="0%" stop-color="#f4efe6" />
+<stop offset="100%" stop-color="#eef7f7" />
+</linearGradient>
+<filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+<feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#9db3b7" flood-opacity="0.18"/>
+</filter>
+</defs>
+<rect width="960" height="420" fill="url(#bgGrad)"/>
+<circle cx="880" cy="70" r="120" fill="#e6f3f0" opacity="0.85"/>
+<circle cx="70" cy="370" r="110" fill="#f6e6d7" opacity="0.85"/>
+<text x="28" y="36" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="26" fill="#1e2a33" text-anchor="start">Sailor Shift Relation Profile</text>
+<text x="28" y="60" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" fill="#6a7c89">A compact ego-network snapshot around the central artist</text>
+<rect x="20" y="78" width="920" height="322" rx="18" fill="#fffaf3" filter="url(#shadow)"/>
+<text x="38" y="106" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="15" font-weight="600" fill="#1e2a33">Distribution</text>
+<line x1="190" y1="132" x2="880" y2="132" stroke="#d9e1e7" stroke-width="10" stroke-linecap="round"/>
+<line x1="190" y1="132" x2="880.0" y2="132" stroke="#3ba7a0" stroke-width="10" stroke-linecap="round"/>
+<text x="176" y="136" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" fill="#1e2a33" text-anchor="end">PerformerOf</text>
+<text x="890.0" y="136" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" font-weight="600" fill="#5c6b73">26</text>
+<line x1="190" y1="166" x2="880" y2="166" stroke="#d9e1e7" stroke-width="10" stroke-linecap="round"/>
+<line x1="190" y1="166" x2="747.3" y2="166" stroke="#3ba7a0" stroke-width="10" stroke-linecap="round"/>
+<text x="176" y="170" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" fill="#1e2a33" text-anchor="end">LyricistOf</text>
+<text x="757.3" y="170" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" font-weight="600" fill="#5c6b73">21</text>
+<line x1="190" y1="200" x2="880" y2="200" stroke="#d9e1e7" stroke-width="10" stroke-linecap="round"/>
+<line x1="190" y1="200" x2="296.2" y2="200" stroke="#3ba7a0" stroke-width="10" stroke-linecap="round"/>
+<text x="176" y="204" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" fill="#1e2a33" text-anchor="end">InStyleOf</text>
+<text x="306.2" y="204" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" font-weight="600" fill="#5c6b73">4</text>
+<line x1="190" y1="234" x2="880" y2="234" stroke="#d9e1e7" stroke-width="10" stroke-linecap="round"/>
+<line x1="190" y1="234" x2="269.6" y2="234" stroke="#3ba7a0" stroke-width="10" stroke-linecap="round"/>
+<text x="176" y="238" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" fill="#1e2a33" text-anchor="end">LyricalReferenceTo</text>
+<text x="279.6" y="238" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" font-weight="600" fill="#5c6b73">3</text>
+<line x1="190" y1="268" x2="880" y2="268" stroke="#d9e1e7" stroke-width="10" stroke-linecap="round"/>
+<line x1="190" y1="268" x2="243.1" y2="268" stroke="#3ba7a0" stroke-width="10" stroke-linecap="round"/>
+<text x="176" y="272" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" fill="#1e2a33" text-anchor="end">InterpolatesFrom</text>
+<text x="253.1" y="272" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" font-weight="600" fill="#5c6b73">2</text>
+<line x1="190" y1="302" x2="880" y2="302" stroke="#d9e1e7" stroke-width="10" stroke-linecap="round"/>
+<line x1="190" y1="302" x2="243.1" y2="302" stroke="#3ba7a0" stroke-width="10" stroke-linecap="round"/>
+<text x="176" y="306" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" fill="#1e2a33" text-anchor="end">DirectlySamples</text>
+<text x="253.1" y="306" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" font-weight="600" fill="#5c6b73">2</text>
+<line x1="190" y1="336" x2="880" y2="336" stroke="#d9e1e7" stroke-width="10" stroke-linecap="round"/>
+<line x1="190" y1="336" x2="216.5" y2="336" stroke="#3ba7a0" stroke-width="10" stroke-linecap="round"/>
+<text x="176" y="340" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" fill="#1e2a33" text-anchor="end">MemberOf</text>
+<text x="226.5" y="340" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" font-weight="600" fill="#5c6b73">1</text>
+<line x1="190" y1="370" x2="880" y2="370" stroke="#d9e1e7" stroke-width="10" stroke-linecap="round"/>
+<line x1="190" y1="370" x2="216.5" y2="370" stroke="#3ba7a0" stroke-width="10" stroke-linecap="round"/>
+<text x="176" y="374" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" fill="#1e2a33" text-anchor="end">ProducerOf</text>
+<text x="226.5" y="374" font-family="Avenir Next, Segoe UI, Arial, sans-serif" font-size="12" font-weight="600" fill="#5c6b73">1</text>
+</svg>

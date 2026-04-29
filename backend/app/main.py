@@ -4,8 +4,10 @@ OceanusEcho Backend - FastAPI 应用入口
 面向「多视图联动（Linked Multiple Views）」的音乐产业图谱可视化后端服务
 """
 
+import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 
 from .core.config import get_settings
@@ -18,28 +20,41 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
-    print("正在连接 Neo4j 数据库...")
-    try:
-        neo4j_connection.connect()
-        if neo4j_connection.verify_connectivity():
-            print("✓ Neo4j 同步连接成功")
-    except Exception as e:
-        print(f"⚠ Neo4j 同步连接失败: {e}")
+    print("正在连接 Neo4j 数据库（严格模式）...")
+    neo4j_connection.connect()
+    neo4j_connection.connect_async()
+
+    max_attempts = 20
+    delay_seconds = 1.5
+    last_error: Exception | None = None
+
+    for attempt in range(1, max_attempts + 1):
+        try:
+            sync_ok = neo4j_connection.verify_connectivity()
+            async_driver = neo4j_connection.get_async_driver()
+            await async_driver.verify_connectivity()
+            if not sync_ok:
+                raise RuntimeError("同步驱动尚未连通")
+            app.state.neo4j_driver = async_driver
+            print("✓ Neo4j 同步/异步连接成功")
+            break
+        except Exception as e:
+            last_error = e
+            app.state.neo4j_driver = None
+            print(f"⚠ Neo4j 尚未就绪，重试 {attempt}/{max_attempts}: {e}")
+            if attempt < max_attempts:
+                await asyncio.sleep(delay_seconds)
+    else:
+        await neo4j_connection.close_async()
+        raise RuntimeError(
+            f"Neo4j 在 {max_attempts} 次重试后仍不可用，请检查容器与端口映射。最后错误: {last_error}"
+        )
 
     try:
-        neo4j_connection.connect_async()
-        async_driver = neo4j_connection.get_async_driver()
-        await async_driver.verify_connectivity()
-        app.state.neo4j_driver = async_driver
-        print("✓ Neo4j 异步驱动初始化成功")
-    except Exception as e:
-        app.state.neo4j_driver = None
-        print(f"⚠ Neo4j 异步驱动初始化失败: {e}")
-
-    yield
-
-    print("关闭 Neo4j 连接...")
-    neo4j_connection.close()
+        yield
+    finally:
+        print("关闭 Neo4j 连接...")
+        await neo4j_connection.close_async()
 
 
 app = FastAPI(
@@ -118,10 +133,18 @@ async def health_check():
     """健康检查端点"""
     sync_ok = neo4j_connection.verify_connectivity()
     async_driver = getattr(app.state, "neo4j_driver", None)
-    async_ok = async_driver is not None
-    return {
+    async_ok = False
+    if async_driver is not None:
+        try:
+            await async_driver.verify_connectivity()
+            async_ok = True
+        except Exception:
+            async_ok = False
+
+    payload = {
         "status": "healthy" if (sync_ok and async_ok) else "degraded",
         "neo4j_sync": "connected" if sync_ok else "disconnected",
         "neo4j_async": "connected" if async_ok else "disconnected",
         "api_prefix": settings.api_prefix
     }
+    return JSONResponse(status_code=200 if (sync_ok and async_ok) else 503, content=payload)
