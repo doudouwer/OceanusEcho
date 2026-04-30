@@ -65,6 +65,11 @@ details.optionalSearch summary:hover {
   color: var(--text-muted);
 }
 
+.fieldCompact {
+  flex: 1 1 320px;
+  min-width: 260px;
+}
+
 .fieldRow {
   display: flex;
   gap: 0.5rem;
@@ -83,6 +88,55 @@ details.optionalSearch summary:hover {
 .select {
   min-width: 160px;
   max-width: 220px;
+}
+
+.genrePicker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem 0.45rem;
+  max-height: 108px;
+  min-width: 280px;
+  max-width: 360px;
+  overflow-y: auto;
+  padding: 0.35rem;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  border-radius: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-dim) transparent;
+}
+
+.genreOption,
+.genreOptionOn {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.72rem;
+  padding: 0.28rem 0.42rem;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  min-width: 0;
+}
+
+.genreOption span,
+.genreOptionOn span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.genreOptionOn {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--text);
+}
+
+.genreOption input,
+.genreOptionOn input {
+  margin: 0;
+  accent-color: var(--accent);
 }
 
 .searchRow {

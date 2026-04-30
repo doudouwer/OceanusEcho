@@ -26,10 +26,10 @@ export function StarProfilerPanel() {
   const yearRange = useDashboardStore((s) => s.yearRange);
 
   const ids = useMemo(() => {
-    if (comparePersonIds.length > 0) return comparePersonIds.slice(0, 3);
-    if (focusedPersonId) return [focusedPersonId];
-    return [];
+    const ordered = [focusedPersonId, ...comparePersonIds].filter((id): id is string => Boolean(id));
+    return [...new Set(ordered)].slice(0, 4);
   }, [comparePersonIds, focusedPersonId]);
+  const chartKey = `${ids.join("|")}::${yearRange[0]}-${yearRange[1]}`;
 
   const { data, isPending, isError, error } = useQuery({
     queryKey: ["person-profile", ids.join(","), yearRange[0], yearRange[1]],
@@ -37,15 +37,29 @@ export function StarProfilerPanel() {
     enabled: ids.length >= 1,
   });
 
+  const profileNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    data?.profiles.forEach((profile) => {
+      map.set(profile.person_id, profile.name || profile.person_id);
+    });
+    return map;
+  }, [data]);
+
   const option = useMemo(() => {
     if (!data?.profiles?.length || !data.dimensions?.length) return null;
 
     const dimensions = data.dimensions;
-    const indicators = dimensions.map((d) => ({
-      name: DIM_LABELS[d] ?? d,
-      max: 1,
-      min: 0,
-    }));
+    const indicators = dimensions.map((dimension) => {
+      const maxValue = Math.max(
+        1.2,
+        ...data.profiles.map((profile) => Number(profile.metrics[dimension] ?? 0)),
+      );
+      return {
+        name: DIM_LABELS[dimension] ?? dimension,
+        max: Math.ceil(maxValue * 10) / 10,
+        min: 0,
+      };
+    });
 
     const seriesData: RadarDatum[] = data.profiles.map((p) => ({
       name: p.name || p.person_id,
@@ -58,21 +72,23 @@ export function StarProfilerPanel() {
       textStyle: { color: "#e6f2f5" },
       tooltip: {
         trigger: "item",
-        formatter: (p: { data?: RadarDatum }) => {
-          const prof = p.data?.raw;
-          if (!prof) return "";
+        formatter: (params: { data?: RadarDatum }) => {
+          const profile = params.data?.raw;
+          if (!profile) return "";
           const lines = dimensions.map(
-            (d) => `${DIM_LABELS[d] ?? d}: ${prof.raw_metrics?.[d] ?? prof.metrics[d] ?? "-"}`,
+            (d) => `${DIM_LABELS[d] ?? d}: ${profile.raw_metrics?.[d] ?? profile.metrics[d] ?? "-"}`,
           );
-          return [`<b>${prof.name}</b>`, ...lines].join("<br/>");
+          return [`<b>${profile.name}</b>`, ...lines].join("<br/>");
         },
       },
       legend: {
-        data: seriesData.map((d) => d.name),
+        data: seriesData.map((item) => item.name),
         textStyle: { color: "#7a9aa8" },
-        bottom: 0,
+        bottom: 4,
       },
       radar: {
+        center: ["54%", "52%"],
+        radius: "58%",
         indicator: indicators,
         splitLine: { lineStyle: { color: "#1e3544" } },
         splitArea: { show: false },
@@ -95,33 +111,33 @@ export function StarProfilerPanel() {
     <PanelCard
       title="Artist profile"
       tag="Star Profiler"
-      description="GET /api/v1/analysis/person-profile?normalized=true — up to 3 in compare; if none, uses the current lead."
+      description="GET /api/v1/analysis/person-profile?normalized=true. The current lead stays as the anchor, with up to three additional artists for comparison."
     >
       <div className={styles.toolbar}>
         <span className={styles.toolbarHint}>Compare list (click to remove):</span>
         <div className={styles.chips}>
           {comparePersonIds.length === 0 ? (
             <span className={styles.toolbarHint}>
-              Empty — add Ivy Echoes members from the top, or open “Search artists / songs”.
+              Empty. Add Ivy Echoes members from the header, or search for more artists.
             </span>
           ) : (
             comparePersonIds.map((id) => (
               <button key={id} type="button" className={styles.chipOn} onClick={() => toggleComparePerson(id)}>
-                {id} ✕
+                {profileNameMap.get(id) ?? id} x
               </button>
             ))
           )}
         </div>
         <span className={styles.toolbarHint}>
-          Year window {yearRange[0]}–{yearRange[1]}
+          Anchor: {data?.anchor_name ?? focusedPersonId ?? "none"} / {yearRange[0]}-{yearRange[1]}
         </span>
       </div>
       {ids.length === 0 && (
         <div className={panelStyles.empty}>
-          No lead selected. The header defaults to Sailor Shift; if you cleared the id, click “Reset to Sailor” or enter an original_id.
+          No lead selected. Reset to Sailor Shift or choose an artist from search.
         </div>
       )}
-      {ids.length >= 1 && isPending && <div className={panelStyles.empty}>Loading…</div>}
+      {ids.length >= 1 && isPending && <div className={panelStyles.empty}>Loading...</div>}
       {ids.length >= 1 && isError && (
         <div className={panelStyles.empty}>
           Failed to load: {error instanceof Error ? error.message : "Unknown error"}
@@ -131,7 +147,7 @@ export function StarProfilerPanel() {
         <div className={panelStyles.empty}>No profile data returned.</div>
       )}
       {ids.length >= 1 && !isPending && !isError && option && (
-        <ReactECharts style={{ height: "100%", minHeight: 260 }} option={option} notMerge />
+        <ReactECharts key={chartKey} style={{ height: "100%", minHeight: 260 }} option={option} notMerge />
       )}
     </PanelCard>
   );

@@ -6,11 +6,18 @@ export type GenreFlowNode = { id: string; name?: string | null };
 export type GenreFlowLink = { source: string; target: string; value: number };
 export type GenreFlowSeriesPoint = { year: number; value: number };
 export type GenreFlowSeries = { genre: string; points: GenreFlowSeriesPoint[] };
+export type GenreStat = { genre: string; song_count: number };
 
 export type GenreFlowPayload = {
   nodes?: GenreFlowNode[] | null;
   links?: GenreFlowLink[] | null;
   series?: GenreFlowSeries[] | null;
+};
+
+export type GenreStatsPayload = {
+  genres: GenreStat[];
+  start_year: number;
+  end_year: number;
 };
 
 export async function fetchGenreFlow(params: {
@@ -30,6 +37,17 @@ export async function fetchGenreFlow(params: {
   return res.data;
 }
 
+export async function fetchGenreStats(params: {
+  start_year: number;
+  end_year: number;
+}): Promise<GenreStatsPayload> {
+  const res = await apiGet<ApiEnvelope<GenreStatsPayload>>("/analysis/genre-stats", {
+    start_year: params.start_year,
+    end_year: params.end_year,
+  });
+  return res.data;
+}
+
 export type NormalizedProfile = {
   person_id: string;
   name: string;
@@ -40,6 +58,8 @@ export type NormalizedProfile = {
 export type PersonProfileNormalizedPayload = {
   profiles: NormalizedProfile[];
   dimensions: string[];
+  anchor_id?: string;
+  anchor_name?: string;
   normalization?: unknown;
 };
 

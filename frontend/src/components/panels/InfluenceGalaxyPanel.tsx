@@ -12,7 +12,6 @@ import panelStyles from "@/components/panels/PanelCard.module.css";
 
 type GraphNode = { id: string; name: string; group: string; clusterId?: number };
 type GraphLink = { source: string | { id: string }; target: string | { id: string }; type: string };
-
 type GraphData = { nodes: GraphNode[]; links: GraphLink[] };
 
 const REL_TYPES = [
@@ -111,6 +110,7 @@ export function InfluenceGalaxyPanel() {
   const [expandedNodeIds, setExpandedNodeIds] = useState<string[]>([]);
   const [expandError, setExpandError] = useState<string | null>(null);
   const [expandingNodeId, setExpandingNodeId] = useState<string | null>(null);
+  const [activeRelTypes, setActiveRelTypes] = useState<string[]>(["IN_STYLE_OF", "MEMBER_OF"]);
 
   useLayoutEffect(() => {
     const el = wrapRef.current;
@@ -141,7 +141,7 @@ export function InfluenceGalaxyPanel() {
       ye,
       selectedGenres.join("|"),
       focusedPersonId ?? "",
-      REL_TYPES.join("|"),
+      activeRelTypes.join("|"),
     ],
     queryFn: () =>
       fetchInfluenceSubgraph({
@@ -149,7 +149,7 @@ export function InfluenceGalaxyPanel() {
         end_year: ye,
         genres: selectedGenres,
         seed_person_ids: focusedPersonId ? [focusedPersonId] : [],
-        rel_types: REL_TYPES,
+        rel_types: activeRelTypes,
         max_hops: 2,
         limit_nodes: 500,
         only_notable_songs: false,
@@ -176,7 +176,7 @@ export function InfluenceGalaxyPanel() {
       try {
         const extra = await fetchInfluenceExpand({
           node_id: node.id,
-          rel_types: REL_TYPES,
+          rel_types: activeRelTypes,
           direction: "both",
           limit: 180,
           start_year: ys,
@@ -193,15 +193,20 @@ export function InfluenceGalaxyPanel() {
         setExpandingNodeId(null);
       }
     },
-    [expandedNodeIds, expandingNodeId, ys, ye, selectedGenres],
+    [activeRelTypes, expandedNodeIds, expandingNodeId, ys, ye, selectedGenres],
+  );
+
+  const bridgeNodeIds = useMemo(
+    () => new Set((data?.bridge_nodes ?? []).map((item) => item.node_id)),
+    [data],
   );
 
   const paintNode = useCallback(
     (node: object, ctx: CanvasRenderingContext2D, globalScale: number) => {
       const n = node as GraphNode & { x?: number; y?: number };
       if (n.x == null || n.y == null) return;
-      const label = n.name;
       const isFocus = focusedPersonId != null && n.id === focusedPersonId;
+      const isBridge = bridgeNodeIds.has(n.id);
       const r = (isSongLikeLabel(n.group) ? 4 : 7) / globalScale;
       ctx.beginPath();
       ctx.arc(n.x, n.y, r, 0, 2 * Math.PI, false);
@@ -214,58 +219,91 @@ export function InfluenceGalaxyPanel() {
         ctx.lineWidth = 1.2 / globalScale;
         ctx.stroke();
       }
+      if (!isFocus && isBridge) {
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, r + 2.5 / globalScale, 0, 2 * Math.PI, false);
+        ctx.strokeStyle = "rgba(240, 179, 95, 0.85)";
+        ctx.lineWidth = 1 / globalScale;
+        ctx.stroke();
+      }
       if (globalScale > 0.35) {
         ctx.font = `${10 / globalScale}px sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
         ctx.fillStyle = "rgba(230,242,245,0.85)";
-        ctx.fillText(label, n.x, n.y + r + 2 / globalScale);
+        ctx.fillText(n.name, n.x, n.y + r + 2 / globalScale);
       }
     },
-    [focusedPersonId],
+    [bridgeNodeIds, focusedPersonId],
   );
 
   const subtitle =
     focusedTimeRange != null
-      ? `Brushed range: ${focusedTimeRange[0]}–${focusedTimeRange[1]} · POST /graph/subgraph + GET /graph/expand/{id}`
-      : `Global year window: ${yearRange[0]}–${yearRange[1]} · POST /graph/subgraph + GET /graph/expand/{id}`;
+      ? `Focused range: ${focusedTimeRange[0]}-${focusedTimeRange[1]} / POST /graph/subgraph + GET /graph/expand/{id}`
+      : `Global year window: ${yearRange[0]}-${yearRange[1]} / POST /graph/subgraph + GET /graph/expand/{id}`;
 
   const bridgeHint = useMemo(() => {
     const top = data?.bridge_nodes?.slice(0, 3) ?? [];
-    if (!top.length) return "No bridge-node ranking in current subgraph";
-    return `Top bridge nodes: ${top.map((x) => `${x.name}(${x.bridge_score.toFixed(2)})`).join(" · ")}`;
+    if (!top.length) return "No bridge-node ranking in the current subgraph.";
+    return `Top bridge nodes: ${top.map((x) => `${x.name} (${x.bridge_score.toFixed(2)})`).join(" / ")}`;
+  }, [data]);
+
+  const seedHint = useMemo(() => {
+    const seeds = data?.seed_people ?? [];
+    if (!seeds.length) return "No lead seed was provided; showing a genre/time filtered graph.";
+    return `Seed people: ${seeds.map((seed) => seed.name).join(", ")}`;
   }, [data]);
 
   const statusLine = isPending
-    ? "Loading subgraph…"
+    ? "Loading subgraph..."
     : isError
       ? error instanceof Error
         ? error.message
         : "Failed to load"
-      : `${graphData.nodes.length} nodes · ${graphData.links.length} edges · ${data?.clusters?.length ?? 0} communities`;
+      : `${graphData.nodes.length} nodes / ${graphData.links.length} edges / ${data?.clusters?.length ?? 0} communities`;
 
   return (
     <PanelCard
       title="Influence network"
       tag="Influence Galaxy"
-      description="Impact tracing + collaboration map + community structure. Click Person/MusicalGroup to refocus and expand neighbors."
+      description="Impact tracing, collaboration links, and community structure. Click a Person or MusicalGroup to refocus and expand neighbors."
     >
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem", margin: "0 0.5rem 0.35rem" }}>
+        {REL_TYPES.map((relType) => {
+          const active = activeRelTypes.includes(relType);
+          return (
+            <button
+              key={relType}
+              type="button"
+              className={active ? panelStyles.tagBtnOn : panelStyles.tagBtn}
+              onClick={() =>
+                setActiveRelTypes((prev) =>
+                  prev.includes(relType) ? prev.filter((item) => item !== relType) : [...prev, relType],
+                )
+              }
+            >
+              {relType}
+            </button>
+          );
+        })}
+      </div>
       <p style={{ margin: "0 0.5rem", fontSize: "0.75rem", color: "var(--text-muted)" }}>{subtitle}</p>
+      <p style={{ margin: "0 0.5rem 0.2rem", fontSize: "0.72rem", color: "var(--text-muted)" }}>{seedHint}</p>
       <p style={{ margin: "0 0.5rem 0.25rem", fontSize: "0.7rem", color: "var(--text-muted)" }}>{statusLine}</p>
       {!isPending && !isError && (
         <p style={{ margin: "0 0.5rem 0.25rem", fontSize: "0.68rem", color: "var(--text-muted)" }}>
           {bridgeHint}
-          {expandingNodeId ? ` · expanding ${expandingNodeId}...` : ""}
-          {expandError ? ` · ${expandError}` : ""}
+          {expandingNodeId ? ` / expanding ${expandingNodeId}...` : ""}
+          {expandError ? ` / ${expandError}` : ""}
         </p>
       )}
       <div ref={wrapRef} className={panelStyles.chart} style={{ minHeight: 280 }}>
         {isPending ? (
-          <div className={panelStyles.empty}>Loading subgraph…</div>
+          <div className={panelStyles.empty}>Loading subgraph...</div>
         ) : isError ? (
           <div className={panelStyles.empty}>{statusLine}</div>
         ) : graphData.nodes.length === 0 ? (
-          <div className={panelStyles.empty}>Subgraph is empty; try another year window, genres, or lead person.</div>
+          <div className={panelStyles.empty}>Subgraph is empty. Try another year window, genre, or lead person.</div>
         ) : (
           <ForceGraph2D
             graphData={graphData}

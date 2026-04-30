@@ -13,7 +13,7 @@ export function DashboardLayout() {
           <span className={styles.brandMark} />
           <div>
             <h1 className={styles.title}>OceanusEcho</h1>
-            <p className={styles.subtitle}>Linked multiple views · Neo4j · FastAPI · React</p>
+            <p className={styles.subtitle}>Linked multiple views / Neo4j / FastAPI / React</p>
           </div>
         </div>
         <GlobalChrome />

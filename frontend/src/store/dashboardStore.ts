@@ -36,7 +36,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   setYearRange: (yearRange) => set({ yearRange }),
   setSelectedGenres: (selectedGenres) => set({ selectedGenres }),
   setFocusedPersonId: (focusedPersonId) => set({ focusedPersonId }),
-  /** Reset to Silas default: Sailor focus, clear compare list and time brush */
+  /** Reset to the Sailor Shift default focus and clear compare/time brush state */
   clearFocus: () =>
     set({
       focusedPersonId: DEFAULT_SAILOR_PERSON_ID,
