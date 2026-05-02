@@ -97,8 +97,11 @@
 ### 快速启动
 
 ```bash
-# 一键启动所有服务
+# 一键启动 Neo4j + 后端（不询问、不卡住；需已打开 Docker Desktop）
 ./scripts/start.sh
+
+# 首次有 MC1_graph.json 时，一并导入图数据
+./scripts/start.sh --import
 ```
 
 ### 手动启动
