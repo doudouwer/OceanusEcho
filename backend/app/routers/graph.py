@@ -341,58 +341,105 @@ async def post_subgraph(request: Request, body: SubgraphRequest):
     rel_limit = min(max(body.limit_nodes * 8, 1500), 120_000)
 
     async with driver.session() as session:
-        cypher = """
-        MATCH (a)-[r]->(b)
-        WHERE type(r) IN $rel_types
-          AND (
-            (
-              a:Song
-              AND toInteger(trim(toString(a.release_date))) >= $sy
-              AND toInteger(trim(toString(a.release_date))) <= $ey
-              AND (size($genres) = 0 OR a.genre IN $genres)
-              AND ($only_notable = false OR coalesce(a.notable, false) = true)
-            )
-            OR
-            (
-              b:Song
-              AND toInteger(trim(toString(b.release_date))) >= $sy
-              AND toInteger(trim(toString(b.release_date))) <= $ey
-              AND (size($genres) = 0 OR b.genre IN $genres)
-              AND ($only_notable = false OR coalesce(b.notable, false) = true)
-            )
-            OR
-            (
-              NOT a:Song AND NOT b:Song
-              AND (
-                EXISTS {
-                  MATCH (a)-[]-(sa:Song)
-                  WHERE toInteger(trim(toString(sa.release_date))) >= $sy
-                    AND toInteger(trim(toString(sa.release_date))) <= $ey
-                    AND (size($genres) = 0 OR sa.genre IN $genres)
-                    AND ($only_notable = false OR coalesce(sa.notable, false) = true)
-                }
-                OR EXISTS {
-                  MATCH (b)-[]-(sb:Song)
-                  WHERE toInteger(trim(toString(sb.release_date))) >= $sy
-                    AND toInteger(trim(toString(sb.release_date))) <= $ey
-                    AND (size($genres) = 0 OR sb.genre IN $genres)
-                    AND ($only_notable = false OR coalesce(sb.notable, false) = true)
-                }
+        if seed_values:
+            cypher = f"""
+            MATCH (seed)
+            WHERE (seed:Person OR seed:MusicalGroup)
+              AND (toString(seed.original_id) IN $seeds OR seed.name IN $seeds)
+            MATCH path=(seed)-[rels*1..{body.max_hops}]-(neighbor)
+            WHERE all(r IN rels WHERE type(r) IN $rel_types)
+            WITH path, rels
+            LIMIT $path_lim
+            UNWIND range(0, size(rels) - 1) AS idx
+            WITH nodes(path)[idx] AS a,
+                 labels(nodes(path)[idx]) AS a_labels,
+                 nodes(path)[idx + 1] AS b,
+                 labels(nodes(path)[idx + 1]) AS b_labels,
+                 rels[idx] AS r
+            WHERE (
+              NOT (a:Song OR b:Song)
+              OR (
+                a:Song
+                AND toInteger(trim(toString(a.release_date))) >= $sy
+                AND toInteger(trim(toString(a.release_date))) <= $ey
+                AND (size($genres) = 0 OR a.genre IN $genres)
+                AND ($only_notable = false OR coalesce(a.notable, false) = true)
+              )
+              OR (
+                b:Song
+                AND toInteger(trim(toString(b.release_date))) >= $sy
+                AND toInteger(trim(toString(b.release_date))) <= $ey
+                AND (size($genres) = 0 OR b.genre IN $genres)
+                AND ($only_notable = false OR coalesce(b.notable, false) = true)
               )
             )
-          )
-        RETURN a, labels(a) AS a_labels, b, labels(b) AS b_labels, type(r) AS rel_type, properties(r) AS rel_props
-        LIMIT $lim
-        """
-        result = await session.run(
-            cypher,
-            rel_types=rel_types,
-            sy=body.start_year,
-            ey=body.end_year,
-            genres=body.genres,
-            only_notable=body.only_notable_songs,
-            lim=rel_limit,
-        )
+            RETURN a, a_labels, b, b_labels, type(r) AS rel_type, properties(r) AS rel_props
+            LIMIT $lim
+            """
+            result = await session.run(
+                cypher,
+                seeds=list(seed_values),
+                rel_types=rel_types,
+                sy=body.start_year,
+                ey=body.end_year,
+                genres=body.genres,
+                only_notable=body.only_notable_songs,
+                path_lim=rel_limit,
+                lim=rel_limit,
+            )
+        else:
+            cypher = """
+            MATCH (a)-[r]->(b)
+            WHERE type(r) IN $rel_types
+              AND (
+                (
+                  a:Song
+                  AND toInteger(trim(toString(a.release_date))) >= $sy
+                  AND toInteger(trim(toString(a.release_date))) <= $ey
+                  AND (size($genres) = 0 OR a.genre IN $genres)
+                  AND ($only_notable = false OR coalesce(a.notable, false) = true)
+                )
+                OR
+                (
+                  b:Song
+                  AND toInteger(trim(toString(b.release_date))) >= $sy
+                  AND toInteger(trim(toString(b.release_date))) <= $ey
+                  AND (size($genres) = 0 OR b.genre IN $genres)
+                  AND ($only_notable = false OR coalesce(b.notable, false) = true)
+                )
+                OR
+                (
+                  NOT a:Song AND NOT b:Song
+                  AND (
+                    EXISTS {
+                      MATCH (a)-[]-(sa:Song)
+                      WHERE toInteger(trim(toString(sa.release_date))) >= $sy
+                        AND toInteger(trim(toString(sa.release_date))) <= $ey
+                        AND (size($genres) = 0 OR sa.genre IN $genres)
+                        AND ($only_notable = false OR coalesce(sa.notable, false) = true)
+                    }
+                    OR EXISTS {
+                      MATCH (b)-[]-(sb:Song)
+                      WHERE toInteger(trim(toString(sb.release_date))) >= $sy
+                        AND toInteger(trim(toString(sb.release_date))) <= $ey
+                        AND (size($genres) = 0 OR sb.genre IN $genres)
+                        AND ($only_notable = false OR coalesce(sb.notable, false) = true)
+                    }
+                  )
+                )
+              )
+            RETURN a, labels(a) AS a_labels, b, labels(b) AS b_labels, type(r) AS rel_type, properties(r) AS rel_props
+            LIMIT $lim
+            """
+            result = await session.run(
+                cypher,
+                rel_types=rel_types,
+                sy=body.start_year,
+                ey=body.end_year,
+                genres=body.genres,
+                only_notable=body.only_notable_songs,
+                lim=rel_limit,
+            )
         rows = await result.data()
 
     nodes: dict[str, GraphNode] = {}
@@ -421,7 +468,13 @@ async def post_subgraph(request: Request, body: SubgraphRequest):
     raw_node_count = len(nodes)
     raw_link_count = len(links)
 
-    nodes, links, seed_node_ids = _apply_seed_hops(nodes, links, seed_values, body.max_hops)
+    if seed_values:
+        seed_node_ids = [
+            nid for nid, node in nodes.items()
+            if node.label in _PERSON_LIKE and (nid in seed_values or (node.name and node.name in seed_values))
+        ]
+    else:
+        nodes, links, seed_node_ids = _apply_seed_hops(nodes, links, seed_values, body.max_hops)
 
     if nodes:
         nodes, links = _trim_by_limit(nodes, links, body.limit_nodes, set(seed_node_ids))

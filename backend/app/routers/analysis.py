@@ -55,6 +55,13 @@ def _build_meta(**kwargs) -> ApiMeta:
     return ApiMeta(**kwargs)
 
 
+def _safe_year(value: Any) -> Optional[int]:
+    try:
+        return int(str(value or "").strip()[:4])
+    except (TypeError, ValueError):
+        return None
+
+
 # ---- Career Arc ----
 
 @router.get("/career-track", response_model=ApiResponse)
@@ -428,4 +435,147 @@ async def get_person_profile(
     return ApiResponse(
         data=PersonProfileData(profiles=profiles, dimensions=dims),
         meta=_build_meta(total_hint=len(id_list), db="connected"),
+    )
+
+
+@router.get("/rising-stars", response_model=ApiResponse)
+async def get_rising_stars(
+    request: Request,
+    start_year: int = Query(2023, ge=1900, le=2200),
+    end_year: int = Query(2040, ge=1900, le=2200),
+    genre: Optional[str] = Query("Oceanus Folk", description="候选新人需要关联的流派；为空时不按流派过滤"),
+    reference_person_id: str = Query("17255", description="已成名参考艺人，默认 Sailor Shift"),
+    recent_start_year: Optional[int] = Query(None, ge=1900, le=2200),
+    limit: int = Query(3, ge=1, le=20),
+    candidate_pool: int = Query(250, ge=20, le=2000),
+):
+    """按当前时间窗筛选并排序 Rising Star 候选。
+
+    评分不是模型训练结果，而是面向 storytelling 的可解释启发式：
+    输出量、Notable 比例、合作网络、跨流派程度、全局网络度数和近年活跃度共同决定候选排序。
+    """
+    if end_year < start_year:
+        raise HTTPException(status_code=400, detail="end_year must be >= start_year")
+
+    driver = getattr(request.app.state, "neo4j_driver", None)
+    if driver is None:
+        raise HTTPException(status_code=503, detail="数据库连接不可用")
+
+    recent_start = recent_start_year if recent_start_year is not None else max(start_year, end_year - 10)
+    if recent_start > end_year:
+        raise HTTPException(status_code=400, detail="recent_start_year must be <= end_year")
+
+    all_rel_types = [
+        "PERFORMER_OF", "COMPOSER_OF", "PRODUCER_OF",
+        "LYRICIST_OF", "IN_STYLE_OF", "MEMBER_OF",
+        "INTERPOLATES_FROM",
+    ]
+
+    async with driver.session() as session:
+        cypher = """
+        MATCH (p:Person)
+        WHERE toString(p.original_id) <> $ref_pid
+
+        OPTIONAL MATCH (p)-[r1]-(s:Song)
+        WHERE type(r1) IN $all_rel
+          AND toInteger(trim(toString(s.release_date))) >= $sy
+          AND toInteger(trim(toString(s.release_date))) <= $ey
+          AND ($genre IS NULL OR s.genre = $genre)
+        WITH p, collect(DISTINCT s) AS songs
+        WHERE size(songs) > 0
+
+        UNWIND songs AS song
+        OPTIONAL MATCH (other:Person)-[r2]-(song)
+        WHERE other <> p AND type(r2) IN $all_rel
+        WITH p, songs, collect(DISTINCT other) AS others
+
+        OPTIONAL MATCH (p)-[r3]-()
+        WHERE type(r3) IN $all_rel
+        WITH p, songs, others, count(DISTINCT r3) AS raw_degree
+
+        RETURN p, songs, others, raw_degree
+        LIMIT $candidate_pool
+        """
+        result = await session.run(
+            cypher,
+            ref_pid=reference_person_id,
+            sy=start_year,
+            ey=end_year,
+            genre=genre if genre else None,
+            all_rel=all_rel_types,
+            candidate_pool=candidate_pool,
+        )
+        rows = await result.data()
+
+    candidates: list[dict[str, Any]] = []
+    for row in rows:
+        p = row["p"]
+        songs = [x for x in row["songs"] if x is not None]
+        years = sorted({y for s in songs if (y := _safe_year(s.get("release_date"))) is not None})
+        if not years or max(years) < recent_start:
+            continue
+
+        genre_counts: dict[str, int] = defaultdict(int)
+        notable_n = 0
+        for s in songs:
+            if s.get("genre"):
+                genre_counts[str(s["genre"])] += 1
+            if bool(s.get("notable")):
+                notable_n += 1
+
+        collaborators = {_public_id(o) for o in row["others"] if o is not None}
+        collaborators.discard(_public_id(p))
+        song_count = len(songs)
+        notable_rate = round(notable_n / song_count, 4) if song_count else 0.0
+        genre_entropy = _entropy(genre_counts.values())
+        degree = int(row["raw_degree"]) if row["raw_degree"] else 0
+        active_years = len(years)
+        latest_year = max(years)
+        recency = max(0, latest_year - recent_start + 1)
+
+        raw_score = (
+            song_count * 2.0
+            + notable_rate * 22.0
+            + len(collaborators) * 1.7
+            + genre_entropy * 4.5
+            + degree * 0.12
+            + recency * 1.2
+            + active_years * 0.8
+        )
+        candidates.append({
+            "person_id": _public_id(p),
+            "name": str(p.get("name") or _public_id(p)),
+            "raw_score": round(raw_score, 4),
+            "metrics": {
+                "song_count": song_count,
+                "notable_rate": notable_rate,
+                "active_years": active_years,
+                "unique_collaborators": len(collaborators),
+                "genre_entropy": genre_entropy,
+                "degree": degree,
+                "latest_year": latest_year,
+            },
+        })
+
+    candidates.sort(key=lambda item: item["raw_score"], reverse=True)
+    top = candidates[:limit]
+    max_score = max((item["raw_score"] for item in top), default=1.0)
+    for item in top:
+        m = item["metrics"]
+        item["score"] = round((item.pop("raw_score") / max_score) * 100, 1) if max_score > 0 else 0.0
+        item["reason"] = (
+            f"{m['song_count']} works, {m['unique_collaborators']} collaborators, "
+            f"notable rate {m['notable_rate']:.2f}, latest active year {m['latest_year']}"
+        )
+
+    return ApiResponse(
+        data={
+            "candidates": top,
+            "genre": genre,
+            "reference_person_id": reference_person_id,
+            "start_year": start_year,
+            "end_year": end_year,
+            "recent_start_year": recent_start,
+        },
+        meta=_build_meta(total_hint=len(candidates), db="connected"),
     )
