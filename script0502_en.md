@@ -118,7 +118,7 @@ The ranking list stops cycling — the **top-ranked candidate** is revealed.
 
 **Voiceover:**
 
-> "Finally, the **Star Profiler** — a radar chart distilling four key dimensions: output momentum, cross-genre reach, network centrality, and genre entropy. Each candidate is scored on all four. The candidate whose polygon **most closely overlaps with Sailor Shift's** is the most data-supported prediction. The data speaks clearly."
+> "Finally, the **Star Profiler** — a radar chart distilling five key dimensions: output momentum, cross-genre reach, network centrality, genre entropy, and stylistic consistency. Each candidate is scored on all five. The candidate whose polygon **most closely overlaps with Sailor Shift's** is the most data-supported prediction. The data speaks clearly."
 
 ---
 
