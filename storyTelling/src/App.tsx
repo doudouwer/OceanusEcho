@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import {
   fetchCareerTrack,
   fetchGenreFlow,
@@ -11,6 +11,10 @@ import {
   type PersonProfilePayload,
   type RisingStarsPayload,
 } from "./api";
+import {
+  computePanelInsights,
+  type PanelInsight,
+} from "./insights";
 import {
   acts,
   type Act,
@@ -36,25 +40,22 @@ type Task1RelationFilter = (typeof task1RelationOptions)[number];
 const task2PanelSteps: PanelKey[] = ["genre", "genre", "genre"];
 const task2Scenes = [
   {
-    title: "第一幕：爆炸还是渐进？",
-    panelTitle: "Explosion or gradual spread",
-    panelDescription: "全局流派筛选锁定 Oceanus Folk，用面积厚度与年度增量判断是 Spike 还是 Gradual。",
-    action: "Filter: Oceanus Folk only",
-    narration: "如果 Oceanus Folk 在短期内陡直上升，就把它定性为 Explosive；如果是多年缓慢增厚，则是 Gradual。",
+    title: "Scene 1 — Spike or Slow Burn?",
+    panelTitle: "Oceanus Folk growth curve",
+    panelDescription: "Thickness and year-over-year delta reveal the spread pattern — sharp burst or gradual climb.",
+    narration: "A sharp spike in one year signals explosive diffusion. A slow multi-year rise means gradual diffusion.",
   },
   {
-    title: "第二幕：跨流派的演变轨迹",
-    panelTitle: "Oceanus Folk genre carousel",
-    panelDescription: "以 Oceanus Folk 为固定基准，轮播叠加所有其他流派，寻找最明显的交汇时间窗。",
-    action: "Carousel: Oceanus Folk + all genres",
-    narration: "当 Oceanus Folk 与某个流派在同一年份同时增厚，故事从单一流派扩散转向跨流派融合。",
+    title: "Scene 2 — Cross-Genre Convergence",
+    panelTitle: "Genre carousel",
+    panelDescription: "Pinning Oceanus Folk as constant, cycling through every other genre to find where overlap peaks.",
+    narration: "When two genres peak in the same year, the story shifts from solo diffusion to cross-genre fusion.",
   },
   {
-    title: "第三幕：流派桑基中的扩散路径",
-    panelTitle: "Oceanus Folk sankey spread",
-    panelDescription: "用桑基图把 Oceanus Folk 连接到共同出现强度最高的流派，观察它扩散到哪些风格生态。",
-    action: "Sankey: Oceanus Folk → top genres",
-    narration: "不再追到具体节点，而是回到宏观流派层面，看 Oceanus Folk 最强地流向了哪些相邻风格。",
+    title: "Scene 3 — Where Does It Flow?",
+    panelTitle: "Style-edge spread",
+    panelDescription: "Sankey flow from Oceanus Folk into its strongest style-edge neighbors.",
+    narration: "Stepping back from individual nodes to the macro level: which neighboring genres does Oceanus Folk pull toward?",
   },
 ] as const;
 
@@ -68,6 +69,7 @@ type StoryState = {
   galaxy?: InfluenceGalaxyPayload;
   profiles?: PersonProfilePayload;
   rising?: RisingStarsPayload;
+  carouselIndex?: number;
 };
 
 export default function App() {
@@ -78,16 +80,26 @@ export default function App() {
   const [task3Settled, setTask3Settled] = useState(false);
   const [task1Relations, setTask1Relations] = useState<Task1RelationFilter[]>(["ALL_RELATION"]);
   const [storyState, setStoryState] = useState<StoryState>({ status: "loading" });
+  const [focusedPanel, setFocusedPanel] = useState<PanelKey>("career");
   const activeAct = acts.find((act) => act.id === activeActId) ?? acts[0];
-  const visiblePanels = panelOrder.filter((panelKey) => activeAct.activePanels.includes(panelKey));
   const task3Candidates = storyState.rising?.candidates.slice(0, TASK3_CANDIDATE_COUNT) ?? [];
   const task3Candidate = activeActId === 3 ? task3Candidates[Math.min(task3CandidateIndex, Math.max(task3Candidates.length - 1, 0))] : undefined;
   const currentPanels =
     activeActId === 1
       ? [activeAct.activePanels[task1Step] ?? "career"]
       : activeActId === 2
-        ? [task2PanelSteps[task2Step] ?? "genre"]
-        : visiblePanels;
+        ? ["genre"]
+        : activeAct.activePanels;
+
+  const currentInsight = useMemo<PanelInsight | null>(() => {
+    return computePanelInsights(focusedPanel, activeActId, storyState, {
+      task1Relations,
+      task2Step,
+      carouselIndex: storyState.carouselIndex,
+      task3CandidateId: task3Candidate?.person_id,
+      task3Settled,
+    });
+  }, [focusedPanel, activeActId, storyState, task1Relations, task2Step, task3Candidate, task3Settled]);
 
   useEffect(() => {
     let cancelled = false;
@@ -112,6 +124,7 @@ export default function App() {
     setTask2Step(0);
     setTask3CandidateIndex(0);
     setTask3Settled(false);
+    setFocusedPanel(activeActId === 1 ? "career" : activeActId === 2 ? "genre" : "profiler");
     return () => {
       cancelled = true;
     };
@@ -149,37 +162,50 @@ export default function App() {
         <div className="brand">
           <span className="brandMark" />
           <div>
-            <p className="eyebrow">OceanusEcho StoryTelling</p>
-            <h1>三幕式数据叙事展示</h1>
+            <p className="eyebrow">OceanusEcho</p>
+            <h1>Mapping the Legacy of Sailor Shift</h1>
             <p className="heroCopy">
-              根据 `StoryTellingScript.md` 的叙事路线，把四个 dashboard panel 组织成可演示的三幕故事。
+              How does a single artist ignite a genre? A data story across influence, diffusion, and discovery.
             </p>
           </div>
         </div>
+        <a
+          href="http://localhost:5173"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="exploreMoreBtn"
+          aria-label="Explore more about Sailor Shift and the OceanusEcho music ecosystem"
+        >
+          Explore the Ecosystem
+        </a>
         <div className="statusCard">
           <span>Active Panels</span>
-          <strong>{currentPanels.map((key) => panelLabels[key]).join(" / ")}</strong>
+          <strong>{currentPanels.map((key) => panelLabels[key as PanelKey]).join(" / ")}</strong>
         </div>
       </header>
 
       <main className="storyGrid">
         <aside className="storyRail">
           <ActSelector activeActId={activeActId} onSelect={setActiveActId} />
-          <Narration act={activeAct} actStep={activeActId === 2 ? task2Step : undefined} />
+          <Narration act={activeAct} actStep={activeActId === 2 ? task2Step : undefined} insight={currentInsight} />
         </aside>
 
         <section key={`${activeAct.id}-${storyState.status}-${task1Step}-${task2Step}`} className={`dashboardGrid act-${activeAct.id} panels-${currentPanels.length}`}>
           {currentPanels.map((panelKey, index) =>
-            renderPanel(panelKey, activeAct.id, index, storyState, task1Relations, setTask1Relations, task2Step, task3Candidate?.person_id, task3Settled),
+            renderPanel(panelKey as PanelKey, activeAct.id, index, storyState, task1Relations, setTask1Relations, setStoryState, task2Step, task3Candidate?.person_id, task3Settled),
           )}
           {activeActId === 1 && (
             <button
               type="button"
               className="storyArrow"
-              aria-label={task1Step === 0 ? "切换到 Influence network" : "返回 Career timeline"}
-              onClick={() => setTask1Step((step) => (step === 0 ? 1 : 0))}
+              aria-label={task1Step === 0 ? "Switch to Influence network" : "Return to Career timeline"}
+              onClick={() => {
+                const next = task1Step === 0 ? 1 : 0;
+                setTask1Step(next);
+                setFocusedPanel((activeAct.activePanels[next] ?? "galaxy") as PanelKey);
+              }}
             >
-              <span>{task1Step === 0 ? "↓" : "↑"}</span>
+              <span>{task1Step === 0 ? "Next" : "Back"}</span>
               {task1Step === 0 ? "Influence network" : "Career timeline"}
             </button>
           )}
@@ -187,11 +213,16 @@ export default function App() {
             <button
               type="button"
               className="storyArrow"
-              aria-label={`切换到 ${task2Scenes[(task2Step + 1) % task2Scenes.length].title}`}
-              onClick={() => setTask2Step((step) => (step + 1) % task2Scenes.length)}
+              aria-label={task2Step < task2Scenes.length - 1 ? `Advance to ${task2Scenes[task2Step + 1].title}` : `Return to ${task2Scenes[task2Step - 1].title}`}
+              onClick={() => {
+                setTask2Step((step) => (step + 1) % task2Scenes.length);
+                setFocusedPanel("genre");
+              }}
             >
-              <span>↓</span>
-              {task2Step === 0 ? "Add Indie Pop" : task2Step === 1 ? "Sankey spread" : "Back to spread"}
+              <span>{task2Step < task2Scenes.length - 1 ? "Next" : "Back"}</span>
+              {task2Step < task2Scenes.length - 1
+                ? task2Scenes[task2Step + 1].title
+                : task2Scenes[task2Step - 1].title}
             </button>
           )}
         </section>
@@ -217,23 +248,15 @@ async function fetchActData(actId: number): Promise<Omit<StoryState, "status" | 
   }
 
   if (actId === 2) {
-    const [genre, genreSankey, galaxy] = await Promise.all([
+    const [genre, genreSankey] = await Promise.all([
       fetchGenreFlow(TASK2_FUSION_START_YEAR, YEAR_RANGE[1]),
       fetchGenreFlow(TASK2_FUSION_START_YEAR, YEAR_RANGE[1], {
         metric: "style_edges",
         sourceGenre: "Oceanus Folk",
         limit: 100,
       }),
-      fetchInfluenceSubgraph({
-        startYear: YEAR_RANGE[0],
-        endYear: YEAR_RANGE[1],
-        genres: ["Oceanus Folk", "Indie Pop"],
-        seedPersonIds: [],
-        relTypes: ["IN_STYLE_OF", "PERFORMER_OF", "COMPOSER_OF", "PRODUCER_OF"],
-        limitNodes: 220,
-      }),
     ]);
-    return { genre, genreSankey, galaxy };
+    return { genre, genreSankey };
   }
 
   const rising = await fetchRisingStars(YEAR_RANGE[0], YEAR_RANGE[1], TASK3_CANDIDATE_COUNT);
@@ -261,6 +284,7 @@ function renderPanel(
   state: StoryState,
   task1Relations: Task1RelationFilter[],
   setTask1Relations: (relations: Task1RelationFilter[]) => void,
+  setStoryState: React.Dispatch<React.SetStateAction<StoryState>>,
   task2Step: number,
   task3CandidateId?: string,
   task3Settled = false,
@@ -275,7 +299,7 @@ function renderPanel(
           key={panelKey}
           panelKey="career"
           title="Career timeline"
-          description="Sailor Shift 的作品频率、Notable 爆发点，以及 Rising Star 早期轨迹对照。"
+          description="Annual output and Notable tags — revealing the early trajectory that preceded her breakthrough."
           style={delayStyle}
         >
           {state.status !== "ready" ? (
@@ -297,7 +321,7 @@ function renderPanel(
           key={panelKey}
           panelKey="galaxy"
           title={actId === 2 ? task2Scene.panelTitle : "Influence network"}
-          description={actId === 2 ? task2Scene.panelDescription : "以 Sailor Shift / Ivy Echoes / Bridge Nodes 为核心的关系网络叙事。"}
+          description={actId === 2 ? task2Scene.panelDescription : "Relationships anchored on Sailor Shift — band members, collaborators, and genre affiliations."}
           style={delayStyle}
         >
           {state.status !== "ready" ? (
@@ -320,7 +344,7 @@ function renderPanel(
           key={panelKey}
           panelKey="genre"
           title={actId === 2 ? task2Scene.panelTitle : "Genre evolution"}
-          description={actId === 2 ? task2Scene.panelDescription : "Oceanus Folk 与 Indie Pop 的扩散、交汇和爆发式增长。"}
+          description={actId === 2 ? task2Scene.panelDescription : "Oceanus Folk and Indie Pop: diffusion, convergence, and explosive growth."}
           style={delayStyle}
         >
           {state.status !== "ready" ? (
@@ -329,6 +353,7 @@ function renderPanel(
             <GenreFlow
               data={actId === 2 && task2Step === 2 ? state.genreSankey : state.genre}
               mode={actId === 2 && task2Step === 0 ? "oceanus" : actId === 2 && task2Step === 2 ? "sankey" : "fusion"}
+              onCarouselIndexChange={(idx) => setStoryState((prev) => ({ ...prev, carouselIndex: idx }))}
             />
           )}
         </PanelFrame>
@@ -339,7 +364,7 @@ function renderPanel(
           key={panelKey}
           panelKey="profiler"
           title="Artist profile"
-          description="巨星模型与新人候选的雷达画像，用于定义和预测 Rising Star。"
+          description="Sailor Shift's pre-breakout profile vs. candidates: how close is the match?"
           style={delayStyle}
         >
           {state.status !== "ready" ? (
@@ -355,7 +380,7 @@ function renderPanel(
 function PanelState({ state }: { state: StoryState }) {
   return (
     <div className={state.status === "error" ? "panelState error" : "panelState"}>
-      {state.status === "error" ? `数据加载失败：${state.error}` : "正在从 FastAPI / Neo4j 加载真实数据..."}
+      {state.status === "error" ? `Data failed to load: ${state.error}` : "Fetching live data from FastAPI / Neo4j\u2026"}
     </div>
   );
 }
@@ -384,7 +409,7 @@ function ActSelector({
   );
 }
 
-function Narration({ act, actStep }: { act: Act; actStep?: number }) {
+function Narration({ act, actStep, insight }: { act: Act; actStep?: number; insight: PanelInsight | null }) {
   const scene = act.id === 2 && actStep !== undefined ? task2Scenes[actStep] : undefined;
   return (
     <article className="narration">
@@ -393,24 +418,36 @@ function Narration({ act, actStep }: { act: Act; actStep?: number }) {
       <p className="subtitle">{act.subtitle}</p>
       {scene && (
         <div className="sceneCue">
-          <span>{scene.action}</span>
-          <strong>{scene.title}</strong>
+          <span>{scene.title}</span>
           <p>{scene.narration}</p>
         </div>
       )}
-      <div className="objective">
-        <span>Objective</span>
-        <p>{act.objective}</p>
-      </div>
+      {act.objective && (
+        <div className="objective">
+          <span>Focus</span>
+          <p>{act.objective}</p>
+        </div>
+      )}
       <div className="scriptBlock">
-        <span>Voiceover</span>
+        <span>Narration</span>
         <p>{act.voiceover}</p>
       </div>
-      <ol>
-        {act.actions.map((action) => (
-          <li key={action}>{action}</li>
-        ))}
-      </ol>
+      {insight && (
+        <div className="chartAnalysis">
+          <div className="chartAnalysisHead">
+            <span className="chartAnalysisLabel">Chart Analysis</span>
+            <strong className="chartAnalysisHeadline">{insight.headline}</strong>
+          </div>
+          <ul>
+            {insight.bullets.map((bullet, i) => (
+              <li key={i}>{bullet}</li>
+            ))}
+          </ul>
+          {insight.callout && (
+            <p className="chartAnalysisCallout">{insight.callout}</p>
+          )}
+        </div>
+      )}
       <p className="insight">{act.insight}</p>
     </article>
   );
@@ -455,7 +492,7 @@ function CareerArc({
   settled?: boolean;
 }) {
   if (!data?.by_year?.length) {
-    return <div className="panelState">当前时间窗没有职业轨迹数据。</div>;
+    return <div className="panelState">No career trajectory data for this time window.</div>;
   }
 
   const years = buildYearRange([data, ...rookieData]);
@@ -597,7 +634,7 @@ function InfluenceGalaxy({
     .map((node) => node.name);
 
   if (!nodes.length) {
-    return <div className="panelState">当前筛选下没有关系网络数据。</div>;
+    return <div className="panelState">No relationship network data for this filter.</div>;
   }
 
   return (
@@ -715,7 +752,7 @@ function layoutNodes(nodes: NonNullable<InfluenceGalaxyPayload["graph"]>["nodes"
   });
 }
 
-function GenreFlow({ data, mode = "fusion" }: { data?: GenreFlowPayload; mode?: "oceanus" | "fusion" | "sankey" }) {
+function GenreFlow({ data, mode = "fusion", onCarouselIndexChange }: { data?: GenreFlowPayload; mode?: "oceanus" | "fusion" | "sankey"; onCarouselIndexChange?: (index: number) => void }) {
   const [carouselIndex, setCarouselIndex] = useState(0);
   const startYear = mode === "oceanus" ? TASK2_OCEANUS_START_YEAR : TASK2_FUSION_START_YEAR;
   const series = data?.series ?? [];
@@ -743,12 +780,16 @@ function GenreFlow({ data, mode = "fusion" }: { data?: GenreFlowPayload; mode?: 
     return () => window.clearInterval(timer);
   }, [comparisonSeries.length, mode]);
 
+  useEffect(() => {
+    onCarouselIndexChange?.(carouselIndex);
+  }, [carouselIndex, onCarouselIndexChange]);
+
   if (mode === "sankey") {
     return <GenreSankey data={data} startYear={startYear} />;
   }
 
   if (!oceanus?.points.length || (mode === "fusion" && !activeCompare?.points.length)) {
-    return <div className="panelState">当前时间窗没有 Oceanus Folk 流派数据。</div>;
+    return <div className="panelState">No Oceanus Folk data for this time window.</div>;
   }
 
   const yearSet = new Set<number>();
@@ -760,7 +801,7 @@ function GenreFlow({ data, mode = "fusion" }: { data?: GenreFlowPayload; mode?: 
   }
   const years = [...yearSet].sort((a, b) => a - b);
   if (!years.length) {
-    return <div className="panelState">当前时间窗没有 {startYear} 年之后的 Oceanus Folk / Indie Pop 流派数据。</div>;
+    return <div className="panelState">No Oceanus Folk or Indie Pop data after {startYear}.</div>;
   }
   const oceanusByYear = new Map(oceanus?.points.map((point) => [point.year, point.value]) ?? []);
   const compareByYear = new Map(activeCompare?.points.map((point) => [point.year, point.value]) ?? []);
@@ -846,7 +887,7 @@ function GenreSankey({ data, startYear }: { data?: GenreFlowPayload; startYear: 
     .slice(0, 7);
 
   if (!connected.length) {
-    return <div className="panelState">当前时间窗没有 Oceanus Folk 的 style-edge 桑基数据。</div>;
+    return <div className="panelState">No style-edge sankey data for Oceanus Folk in this window.</div>;
   }
 
   const width = 520;
@@ -928,7 +969,7 @@ function StarProfiler({
   const anchor = profiles?.profiles[0];
   const candidates = profiles?.profiles.slice(1) ?? [];
   if (!anchor || !candidates.length || !rising?.candidates.length) {
-    return <div className="panelState">没有足够的画像或候选新星数据。</div>;
+    return <div className="panelState">Insufficient profile or rising-star data.</div>;
   }
 
   const dimensions = profiles.dimensions.slice(0, 5);
