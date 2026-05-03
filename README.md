@@ -26,6 +26,14 @@
 - **开发**：`cd frontend && npm install && npm run dev`，默认 <http://localhost:5173>；`/api` 已代理到 `http://127.0.0.1:8000`（后端就绪后可直接联调）。
 - **数据模式**：当前默认就是在线模式，不再维护前端离线占位图 fallback。前端所有 Panel 直接请求 `/api/v1`。
 
+### 叙事演示工程（`storyTelling/`）
+
+- **用途**：独立于 `frontend/` 的课堂/演示用三幕叙事界面，推荐作为演示入口。
+- **栈**：Vite 5、React 18、TypeScript，全部手写 SVG 图表（无 ECharts/D3 依赖）。
+- **开发**：`cd storyTelling && npm install && npm run dev`，默认 <http://localhost:5174>；`/api` 同样代理到 `http://127.0.0.1:8000`。
+- **与 `frontend/` 的关系**：两个前端共享同一个 FastAPI 后端；`storyTelling/` 右上角的 **"Explore the Ecosystem"** 按钮跳转至 `http://localhost:5173`。
+- **完整启动说明**：见 `storyTelling/README.md`。
+
 ### 后端工程（`backend/`）
 
 - **栈**：FastAPI、Neo4j Python Driver（异步）、Pydantic Settings。
@@ -87,24 +95,43 @@
 
 ---
 
-## 后端启动指南
+## 启动指南
 
 ### 环境要求
 
-- Python 3.9+
-- Docker + Docker Compose
+- Python 3.9+（后端）
+- Docker + Docker Compose（Neo4j）
+- Node.js 18+（前端）
 
-### 快速启动
+### 快速启动（完整三服务）
+
+#### 1. Neo4j + FastAPI 后端
 
 ```bash
-# 一键启动 Neo4j + 后端（不询问、不卡住；需已打开 Docker Desktop）
-./scripts/start.sh
-
-# 首次有 MC1_graph.json 时，一并导入图数据
-./scripts/start.sh --import
+# 项目根目录
+./scripts/start.sh --import   # 首次运行；之后只需 ./scripts/start.sh
 ```
 
-### 手动启动
+#### 2. StoryTelling 叙事界面（推荐演示入口）
+
+```bash
+cd storyTelling && npm install && npm run dev
+# → http://localhost:5174
+```
+
+#### 3. 原始前端仪表盘（可选）
+
+```bash
+# 另开终端
+cd frontend && npm install && npm run dev
+# → http://localhost:5173
+```
+
+StoryTelling 界面右上角的 **"Explore the Ecosystem"** 按钮跳转至此。
+
+> 详细说明与故障排查见 [storyTelling/README.md](storyTelling/README.md)。
+
+### 手动启动（后端）
 
 ```bash
 cd backend
@@ -132,11 +159,15 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 ### 服务地址
 
-- API 文档: http://localhost:8000/docs
-- Neo4j Browser: http://localhost:7474
-- Neo4j 账号: neo4j / password
+| 服务 | 地址 |
+|------|------|
+| StoryTelling 叙事界面 | http://localhost:5174 |
+| 原始前端仪表盘 | http://localhost:5173 |
+| FastAPI 文档 | http://localhost:8000/docs |
+| Neo4j Browser | http://localhost:7474 |
+| Neo4j 账号 | neo4j / password |
 
-### 功能验证与效果预览
+### 功能验证
 
 在后端与 Neo4j 启动后，可运行：
 
